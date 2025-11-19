@@ -1,0 +1,72 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.pkl
+
+# Byte-compiled / optimized / DLL files
+*.egg-info/
+*.egg
+.eggs/
+
+# Virtual environment
+venv/
+.env/
+.env.*
+
+# --- Environment variables ---
+.env
+.env.local
+.env.development
+.env.production
+
+# --- VSCode ---
+.vscode/
+.history/
+
+# --- OS system files ---
+.DS_Store
+Thumbs.db
+
+# --- SQLite database ---
+data/support.db
+data/support.db-journal
+
+# --- Chroma / Vectorstore ---
+data/vectorstore/
+data/vectorstore/*
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Cache ---
+.cache/
+*.cache
+.cache*
+*__pycache__*/
+pytest_cache/
+.cache/
+.ipynb_checkpoints/
+
+# --- Build artifacts ---
+build/
+dist/
+*.spec
+
+# --- Test outputs ---
+.coverage
+htmlcov/
+coverage.xml
+
+# --- Streamlit ---
+.streamlit/secrets.toml
+.streamlit/
+
+# --- Temporary files ---
+*.tmp
+*.swp
+*.swo
+
