@@ -9,13 +9,13 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
 
-from app.db import Base
+from app.infrastructure.db.connection import Base
 
 
 class Ticket(Base):
     """
     ORM model for support tickets.
-    
+
     Attributes:
         id: Primary key identifier
         text: The support ticket text content
@@ -26,9 +26,9 @@ class Ticket(Base):
         created_at: Timestamp when the ticket was created
         human_label: Human feedback label (e.g., 'correct', 'wrong_action', 'wrong_reply')
     """
-    
+
     __tablename__ = "tickets"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     text = Column(Text, nullable=False)
     action = Column(String, nullable=False)

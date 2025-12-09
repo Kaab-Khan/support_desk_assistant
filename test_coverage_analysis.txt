@@ -1,0 +1,87 @@
+=== COMPREHENSIVE TEST COVERAGE ANALYSIS ===
+
+TESTED COMPONENTS:
+
+1. API ENDPOINTS (Integration Tests):
+   ✅ POST /api/v1/tickets/agent - 4 tests
+   ✅ POST /api/v1/rag/query - 6 tests
+   ✅ POST /api/v1/summarise - 6 tests
+   ❌ POST /api/v1/tickets/feedback - 0 tests
+   ❌ GET /api/v1/tickets - 0 tests
+   ❌ GET /health - 0 tests
+
+2. SERVICES:
+   ✅ RagService.answer() - 2 unit + 9 integration = 11 tests
+   ✅ SummariserService.summarise() - 2 unit + 8 integration = 10 tests
+   ✅ TicketAgentService.process_ticket() - 4 unit tests
+
+3. REPOSITORIES:
+   ✅ create_ticket() - 4 unit + 4 integration = 8 tests
+   ✅ get_ticket() - 2 unit + 1 integration = 3 tests
+   ✅ list_tickets() - 2 unit + 1 integration = 3 tests
+   ✅ update_ticket_feedback() - 0 unit + 1 integration = 1 test
+   ❌ update_ticket_agent_result() - 0 tests
+
+4. CLIENTS:
+   ✅ OpenAIClient.generate_chat_completion() - 2 unit + 2 integration = 4 tests
+   ✅ OpenAIClient.generate_embeddings() - 0 unit + 2 integration = 2 tests
+   ✅ OpenAIClient.generate_rag_response() - 0 unit + 2 integration = 2 tests
+   ✅ OpenAIClient.generate_summary_with_tags() - 0 unit + 2 integration = 2 tests
+   ✅ VectorStoreClient.query_similar() - 2 unit + 6 integration = 8 tests
+   ❌ VectorStoreClient.upsert_documents() - 0 tests
+
+5. DATABASE:
+   ✅ Database initialization - 10 tests
+   ✅ Ticket model CRUD - covered in repository tests
+   ❌ Database constraints beyond basic NOT NULL - limited testing
+   ❌ Database connection pool behavior - 0 tests
+
+6. SCHEMAS:
+   ❌ RagQueryRequest validation - only inline validator, no dedicated tests
+   ❌ SummariseRequest validation - 0 tests
+   ❌ TicketAgentRequest validation - 0 tests
+   ❌ TicketFeedbackRequest validation - 0 tests
+   ❌ Response schema serialization - 0 dedicated tests
+
+7. CONFIGURATION:
+   ❌ Settings class - 0 tests
+   ❌ get_settings() singleton - 0 tests
+   ❌ Environment variable loading - 0 tests
+   ❌ Missing/invalid API keys - 0 tests
+
+8. DEPENDENCY INJECTION:
+   ❌ get_db() - 0 tests
+   ❌ get_ticket_agent_service() - 0 tests
+   ❌ get_rag_service() - tested indirectly in integration
+   ❌ get_summariser_service() - tested indirectly in integration
+   ❌ get_openai_client() - tested indirectly in integration
+   ❌ get_vectorstore_client() - tested indirectly in integration
+
+9. MAIN APPLICATION:
+   ❌ FastAPI app initialization - 0 tests
+   ❌ Startup event - 0 tests
+   ❌ Router registration - 0 tests
+
+10. ERROR HANDLING & EDGE CASES:
+    ✅ OpenAI empty messages error - 1 test
+    ❌ Database connection failures - 0 tests
+    ❌ OpenAI API rate limiting - 0 tests
+    ❌ Pinecone connection errors - 0 tests
+    ❌ Invalid API keys - 0 tests
+    ❌ Concurrent requests - 0 tests
+    ❌ Request payload > max size - 0 tests
+    ❌ Database transaction rollback - 0 tests
+    ❌ Malformed JSON from OpenAI - 1 skipped test
+    ❌ Network timeouts - 0 tests
+
+SUMMARY STATISTICS:
+- Total test files: 12
+- Total tests: ~78
+- Unit tests: ~20
+- Integration tests: ~58
+- API endpoint coverage: 3/6 endpoints (50%)
+- Repository method coverage: 4/5 methods (80%)
+- Service coverage: 3/3 services (100% basic, missing edge cases)
+- Client method coverage: 4/5 methods (80%)
+
+ESTIMATED UNCOVERED CODE: ~30-40%

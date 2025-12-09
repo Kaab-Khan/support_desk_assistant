@@ -1,0 +1,332 @@
+HelpDeskFlow – General FAQ & Customer Support Guide (Deep Version)
+
+Document Type: Public
+Version: v2.0
+Last Updated: 15 Jan 2025
+Owner: Customer Success Team
+Status: Published
+
+1. Introduction
+
+This guide provides comprehensive answers to the most common operational and technical questions encountered by HelpDeskFlow users. Unlike the Quick FAQ on our website, this document includes full troubleshooting steps, decision paths, configuration rules, and best practices used by our internal support agents.
+
+2. Account & Login
+
+2.1 Creating an Account (Detailed Steps)
+
+To set up your workspace:
+
+Go to https://dashboard.helpdeskflow.com/signup
+
+Enter your business email address
+
+Disposable email addresses are blocked
+
+Personal Gmail/Yahoo addresses trigger additional verification
+
+Create a password
+
+Minimum 10 characters
+
+Must include uppercase, lowercase, and a number
+
+Common passwords (“Password123”) are not allowed
+
+Click Continue
+
+Check your email for “Activate Your HelpDeskFlow Workspace”
+
+The link expires in 24 hours
+
+Clicking the link twice invalidates the token
+
+Set your workspace name
+
+Only alphanumeric and hyphens allowed
+
+Select your time zone
+
+Complete onboarding checklist
+
+Add company logo
+
+Configure support email
+
+Invite your first user
+
+Common Errors During Signup
+
+“Email not allowed” → disposable domains detected
+
+“Token invalid” → user clicked old link
+
+“Workspace name taken” → existing account with similar name
+
+2.2 Password Reset
+
+If you forget your password:
+
+Visit: /forgot-password
+
+Enter your email
+
+Wait 30–60 seconds
+
+You will receive an email with subject:
+“Reset Your HelpDeskFlow Password”
+
+Click the reset link
+
+Valid for 20 minutes
+
+One-time use only
+
+Enter new password and confirm
+
+Troubleshooting Password Reset Problems
+
+2.3 Account Locked (Deep Explanation)
+
+Your account can get locked for:
+
+8 incorrect password attempts
+
+5 incorrect 2FA attempts
+
+Login attempts from 3+ geographical locations in < 5 minutes
+
+Admin-enforced lock due to suspicious activity
+
+Unlocking Steps
+
+Auto-unlock after 30 minutes
+
+OR admin can unlock from: Settings → Team Members → Security → Unlock User
+
+OR contact support with:
+
+Email
+
+Workspace name
+
+IP address
+
+Security Tip
+
+If your account keeps locking:
+
+Enable 2FA
+
+Reset password
+
+Check if someone else is trying to access your account
+
+3. Workspace & User Management
+
+3.1 Inviting Team Members (Detailed Steps)
+
+Go to Settings → Team Members
+
+Click Invite User
+
+Enter full email address
+
+Select role (Admin, Agent, Viewer)
+
+Select access groups (if enabled)
+
+Add optional invitation message
+
+Click Send Invitation
+
+The user receives an email with a unique activation token (valid for 48 hours).
+
+Invitation Errors
+
+“User already exists”: must deactivate existing user
+
+“Domain restricted”: Admin has enabled domain restrictions
+
+“Email bounced”: corporate mail server rejected message
+
+3.2 Role Permissions (Underlying Rules)
+
+Admin
+
+Full system access
+
+Can manage billing
+
+Can view integrations
+
+Can delete tickets
+
+Can change workspace settings
+
+Agent
+
+Create/respond to tickets
+
+Can view customer profiles
+
+Cannot see billing or user management
+
+Viewer
+
+Read-only access
+
+No ticket editing
+
+No integrations
+
+Permission Exceptions
+
+Admins can override:
+
+automation rule lockouts
+
+rate limit errors
+
+API key rotations
+
+4. Ticket Management
+
+4.1 Ticket Creation (Step-by-Step)
+
+A. Creating a Ticket from Dashboard
+
+Click New Ticket
+
+Enter customer email
+
+Enter subject
+
+Write description
+
+Attach files (max: 25MB each)
+
+Select tags (optional)
+
+Select ticket priority
+
+Assign agent or team
+
+Click Create
+
+B. Email-to-Ticket Pipeline Explanation
+
+When a customer emails support@yourcompany.helpdeskflow.com:
+
+Email enters the inbound processing queue
+
+SPF/DKIM are validated
+
+System extracts sender, subject, body, attachments
+
+Runs spam filter
+
+Creates ticket with default routing rules
+
+Common Issues
+
+Email stuck in queue → mailbox rate-limited
+
+Ticket created without attachments → attachment corrupted
+
+Spam filter false positive → adjust spam threshold in settings
+
+5. Billing (Deep)
+
+5.1 How Billing Works Internally
+
+You are billed per active agent
+
+If you deactivate an agent, billing stops next cycle
+
+If an agent is reactivated mid-month, prorated charge applies
+
+Invoice Structure
+
+Each invoice contains:
+
+Agent count
+
+Billing cycle (monthly/annual)
+
+Taxes based on region
+
+Add-ons (Automation, Extra Storage)
+
+Invoice ID + payment reference
+
+6. Integrations (Deep)
+
+6.1 Slack Integration – Full Setup
+
+Go to Settings → Integrations → Slack
+
+Click Connect to Slack
+
+Choose the workspace
+
+Approve permissions
+
+Select channels to receive notifications
+
+Configure notification rules
+
+Troubleshooting
+
+Bot not responding → reauthorize
+
+Duplicate messages → two workflows active
+
+Missing permissions → need admin-level permissions
+
+7. Troubleshooting (Deep)
+
+7.1 Dashboard Not Loading
+
+Root causes:
+
+Browser cache issues
+
+Javascript blocked
+
+Server rate limits
+
+Incorrect date/time settings
+
+Fix path:
+
+Hard refresh (CTRL + SHIFT + R)
+
+Try different browser
+
+Disable ad-block
+
+Check status page
+
+Reset local storage
+
+8. Contact Support
+
+Emergency Support Workflow
+
+Enterprise customers have:
+
+24/7 hotline
+
+15-minute response guarantee
+
+Priority queue bypass
+
+Agents must log every emergency ticket with:
+
+timestamp
+
+issue type
+
+customer ID
+
+impact score

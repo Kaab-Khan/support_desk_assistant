@@ -1,0 +1,183 @@
+HelpDeskFlow
+
+Internal Support Operations Playbook
+
+Document Type: Internal Use Only
+Version: 3.1
+Last Updated: 22 Jan 2025
+Owner: Customer Support Operations Team
+Status: Restricted – Not for Customer Distribution**
+
+1. Introduction
+
+This Support Operations Playbook defines the complete internal procedure for handling customer tickets at HelpDeskFlow.
+It outlines:
+
+how agents should communicate
+
+how to triage issues
+
+how to handle escalations
+
+when to involve engineering
+
+how to document actions
+
+internal SLAs for each ticket type
+
+tone, language, and compliance guidelines
+
+This is the primary internal reference document used by all support agents and supervisors.
+
+2. Support Communication Guidelines
+
+2.1 Tone & Language Requirements (Deep Bullets)
+
+All customer messages must be written in a calm, professional, and predictable tone, even if the customer is frustrated or confrontational. This ensures conversations stay grounded and prevents escalation due to reactive messaging. Agents should mirror customer language only in complexity (never in emotion), ensuring clarity without appearing dismissive or robotic.
+
+Agents should avoid absolute statements (e.g., “This will never happen again”), because such claims create liability and set unrealistic expectations. Instead, agents should explain what steps they can take, what they have verified, and what protections HelpDeskFlow enforces to prevent issues.
+
+Technical explanations should be simplified without removing factual accuracy, meaning agents should avoid exposing internal architecture details but must still give enough information for customers to understand root causes.
+
+2.2 Phrasing Do’s and Don’ts
+
+Good Practices:
+
+“Let me check this for you and update you shortly.”
+
+“I’ve reviewed the logs and can confirm the issue began at 14:52 UTC.”
+
+“Here’s what we can do next to resolve this.”
+
+Avoid:
+
+“It’s not our fault” (blame-shifting)
+
+“Just wait” (unclear)
+
+“You misunderstood” (invalidates customer experience)
+
+3. Ticket Triage Process
+
+3.1 First Contact Assessment
+
+The first agent must categorize the ticket within 2 minutes of opening it, because most automation rules depend on initial categorization to route properly. Misclassification often results in significant delays, so agents must take the time to interpret both explicit and implied customer intent.
+
+Agents should identify whether the issue is functional, billing-related, usability-related, or caused by external integrations, and tag accordingly. These tags directly influence which team will handle the case later on.
+
+3.2 Mandatory Diagnostic Steps on Every Ticket
+
+Agents must check the customer’s recent system actions, including login attempts, recent integrations, automation rule changes, and any system updates they applied. This allows the agent to identify whether the problem is user-side or system-side.
+
+Agents must review the customer’s last 5–10 tickets, because repeated problems often point to configuration patterns, internal misuse, or unaddressed training needs. Many recurring issues can be solved permanently by identifying root causes that customers do not explicitly state.
+
+Agents must confirm workspace status, ensuring no suspensions, overdue invoices, or missing domain verifications are affecting functionality. A surprising number of technical issues trace back to workspace limitations rather than actual bugs.
+
+4. Escalation Framework (Ultra-Deep)
+
+4.1 Level 1 → Level 2 Escalation
+
+A ticket should be escalated to Level 2 support when it requires advanced diagnosis outside the standard troubleshooting checklist, such as when logs reveal unrecognized errors or when the customer’s workflow deviates heavily from standard patterns.
+
+Before escalating, the Level 1 agent must document all attempted steps, because incomplete records force Level 2 agents to repeat basic checks, slowing down resolution for everyone.
+
+Level 1 must also provide a summary of customer expectations, such as whether the customer is waiting for an urgent workaround or looking for an explanation. This prevents unnecessary back-and-forth messages.
+
+4.2 Level 2 → Engineering Escalation
+
+Engineering should only receive tickets that demonstrably involve a defect, server-side issue, or inconsistent behaviour not explained by configuration, meaning all common causes must be eliminated before escalation.
+
+Escalations must include concrete reproduction steps, preferably written as a sequence of numbered actions that engineering can follow in a staging environment. Ambiguous or incomplete reproduction steps often lead to rejected escalations.
+
+If logs indicate that the issue is workspace-specific, the agent must include the workspace ID, affected customer email, affected ticket ID, and timestamp range, allowing engineering to narrow scenarios in monitoring tools.
+
+5. Internal SLA Policy
+
+5.1 Response Time Commitments
+
+Level 1 must send an initial response within 30 minutes during business hours, acknowledging receipt and outlining the next steps. Even if the solution is not immediate, acknowledgement reduces customer anxiety and sets expectations.
+
+Level 2 must send a technical update within 3 hours, ideally including findings from logs or attempted reproductions. Silence at this stage often leads to customer frustration.
+
+Engineering must provide a diagnostic response within 24 hours, unless the issue is marked as P0 (see below).
+
+5.2 Severity Categories (Deep Explanation)
+
+P0 – Critical Outage
+
+System unavailable for all users
+
+Email or ticket routing down
+
+Data loss or corrupted content
+Engineering must respond within 30 minutes
+Fix or clear workaround must be deployed within 4 hours
+
+P1 – High Impact
+
+Major feature not working
+
+Integrations completely failing
+
+Widespread automation issues
+Response within 1 hour
+
+P2 – Medium Impact
+
+Partial feature degradation
+Response within 8 hours
+
+P3 – Low Impact
+
+Cosmetic bugs
+
+UI layout issues
+Response within 48 hours
+
+6. Handling Difficult or Upset Customers
+
+6.1 Emotional De-Escalation Guidelines
+
+Agents must acknowledge emotions without validating incorrect assumptions, meaning they should show understanding without agreeing to blame or incorrect technical conclusions. Phrases like “I understand how frustrating this must be” help stabilise the conversation.
+
+Agents should present structured next steps, because customers calm down when they understand exactly what will happen next, and when.
+
+Avoid defensive explanations, even if the customer is wrong or rude. The goal is to move the conversation toward resolution, not correctness.
+
+7. Internal Notes & Documentation Standards
+
+7.1 How Internal Notes Must Be Written
+
+Internal notes must include a timestamp, the action taken, and the rationale for the action, because future agents rely on this information to understand why certain decisions were made.
+
+Notes should reference attached files or logs explicitly, e.g., “Reviewed log snippet 14:02–14:08 for workspace #4829; identified repeated webhook failures due to invalid signature.”
+
+Internal notes must never speculate, because internal speculation may be misinterpreted by future agents as confirmed fact.
+
+8. Ticket Closure Standards
+
+8.1 When a Ticket Can Be Closed
+
+Tickets should only be closed after the customer explicitly confirms resolution, or after 72 hours without customer response following a resolution update. This ensures customers do not feel abandoned.
+
+Before closing, agents must confirm all integrations, automations, and email flows are functioning normally, because some issues degrade gradually and require observation before closure.
+
+8.2 Post-Closure Workflow
+
+Closed tickets automatically enter a 30-day read-only state, where they can be reopened via customer reply. This prevents accidental closure from ending a conversation prematurely.
+
+Tags and metadata from closed tickets feed into monthly support analytics, meaning accuracy here affects workload planning and product decisions.
+
+9. Quality Assurance Guidelines
+
+9.1 Random Ticket Audits
+
+Supervisors review 5–10 tickets per agent every two weeks, checking accuracy of responses, tone consistency, and adherence to internal policies. These audits form part of quarterly performance evaluations.
+
+If an agent repeatedly mislabels tickets, they receive targeted retraining, because incorrect categorization causes reporting inaccuracies and automation failures.
+
+9.2 CSAT (Customer Satisfaction) Handling
+
+If a customer rates support 3/5 or lower, an automatic follow-up is generated, requiring the agent to reach out and understand the dissatisfaction before it is counted as a permanent rating.
+
+Low CSAT ratings across multiple tickets trigger a training review, because systemic issues must be addressed early.

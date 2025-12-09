@@ -1,0 +1,364 @@
+Document 4: HelpDeskFlow
+
+Ticket Troubleshooting & Diagnostic Guide
+
+Document Type: Internal
+Version: 2.7
+Last Updated: 16 Jan 2025
+Owner: Technical Support Team
+Status: Restricted – Internal Use Only
+
+1. Introduction
+
+This document provides detailed procedures for diagnosing and resolving common issues customers face while using HelpDeskFlow. It is specifically created for support agents and includes:
+
+step-by-step troubleshooting workflows
+
+diagnostic paths
+
+probable root causes
+
+internal system behaviours
+
+escalation rules
+
+screenshot references (described textually)
+
+error code mappings
+
+The goal is to ensure agents deliver consistent and accurate technical support aligned with product behaviour.
+
+2. Ticket Not Loading / Ticket Page Blank
+
+2.1 Symptoms
+
+Customers may report:
+
+the ticket page showing a blank screen
+
+the loading spinner never completing
+
+partial ticket data appearing
+
+errors like “Unable to load ticket” or code TCK-404
+
+2.2 Root Causes & Explanations
+
+Browser caching conflict – the browser may be storing outdated JavaScript files, causing the React application to fail during hydration.
+
+Stale session token – expired or invalid session cookies prevent the server from authorizing the request.
+
+Slow network or packet loss – incomplete responses from the API cause missing UI components.
+
+Large ticket size – tickets with many attachments or long threads may exceed client rendering limits.
+
+Filter mismatch – if the user applied incompatible filters, the ticket might be hidden or incompletely loaded.
+
+2.3 Troubleshooting Steps
+
+Perform a hard refresh (CTRL + SHIFT + R)
+
+This forces the browser to bypass its cache and request fresh assets, resolving most ticket-rendering issues caused by cached scripts.
+
+Clear domain-specific site data
+
+Agents should guide customers to clear cookies and local storage only for HelpDeskFlow, ensuring session tokens and cached elements are rebuilt cleanly without impacting other websites.
+
+Test in Incognito Mode
+
+This removes all extensions and cached files. If the issue disappears in Incognito, an extension is blocking scripts or modifying requests.
+
+Check the ticket ID directly through URL entry
+
+If the direct URL works, the issue is likely related to filtering rules applied on the Inbox list, not the ticket itself.
+
+Disable all browser extensions temporarily
+
+Extensions like ad-blockers or privacy filters often interfere with API calls or block inline scripts essential for the UI.
+
+Verify network stability
+
+Ask the customer to run a speed test. Packet loss > 5% often causes intermittent loading issues.
+
+Check ticket size
+
+If the ticket includes >10MB of attachments or >200 messages, request engineering to generate a compressed version or archive prior messages.
+
+Escalate if:
+
+Ticket repeatedly fails to load even in a clean environment
+
+API call returns 500-level errors
+
+Ticket ID returns “not found” on authenticated API call
+
+3. Email-to-Ticket Conversion Failing
+
+3.1 Symptoms
+
+Customer emails are not appearing as tickets
+
+Attachments stripped from the email
+
+Email stuck in “Processing Queue”
+
+Repeated bounce notifications
+
+3.2 Root Causes & Explanations
+
+SPF/DKIM failure – sending domain did not pass email authentication.
+
+Mailbox rate-limiting – company email provider is blocking forwarding due to send frequency.
+
+Attachment size exceeding threshold – HelpDeskFlow enforces a per-email attachment limit of 25MB, and oversized attachments are dropped.
+
+Auto-routing conflicts – two rules attempted to tag or assign simultaneously, causing the ticket creation process to halt.
+
+Thread merging misfire – email thread was incorrectly merged with an older ticket based on subject similarity.
+
+3.3 Troubleshooting Steps
+
+Verify SPF/DKIM
+
+Request customer to check DNS settings or provide the email headers.
+
+Headers with “FAIL” under SPF or DKIM will be rejected by the system.
+
+Inspect the Email Processing Queue
+
+Navigate to Settings → Email Logs → Inbound Processing.
+
+Find the email ID and check its status (QUEUED, FAILED, RETRYING, PROCESSED).
+
+Check for Attachment Errors
+
+In the email logs, attachment errors show as ATTACHMENT_TOO_LARGE or FILE_FORMAT_INVALID.
+
+Review Automation Logs
+
+Conflicting rules (e.g., one rule adding a tag, another removing it) can block ticket creation.
+
+Search for Merged Threads
+
+Use search format: subject:"<subject line>" OR email:"sender@domain.com"
+
+Escalate if:
+
+The queue shows “FAILED” for all emails from a specific domain
+
+Email loops back with 550 errors
+
+Attachments consistently corrupted
+
+4. Slack Notifications Not Working
+
+4.1 Symptoms
+
+Slack messages fail to appear in the configured channel
+
+Alerts from automation rules not triggering
+
+Channel shows bot as offline or unresponsive
+
+4.2 Root Causes
+
+Slack integration token expired
+
+Permissions revoked by Slack admin
+
+Incorrect channel mapping
+
+Slack API rate limits exceeded
+
+Automation rule misconfiguration
+
+4.3 Troubleshooting Steps
+
+Check Integration Status
+
+Go to Settings → Integrations → Slack
+
+Verify whether the integration shows as “Connected,” “Expired Token,” or “Revoked Access.”
+
+Re-authenticate Slack App
+
+Click “Reconnect” to generate new OAuth token.
+
+Verify Bot Permissions
+
+Bot must have permission to:
+
+read channels
+
+post messages
+
+send attachments
+
+Check Channel Settings
+
+Ensure bot was added manually to the desired Slack channel.
+
+Check Rule Logic
+
+Confirm the automation rule contains a valid Slack action.
+
+5. Dashboard Performance Issues (Slow / Freezing)
+
+5.1 Symptoms
+
+Dashboard lags
+
+Ticket list loads slowly
+
+Spinning loader persists
+
+Switching tabs freezes the interface
+
+5.2 Root Causes & Explanations
+
+Rendering overload – dashboard attempting to render very large data sets without pagination.
+
+Corrupted local storage – invalid cached state causing React to repeatedly re-render.
+
+Heavy browser extensions – interfering with scripts or blocking JS events.
+
+Multiple browser tabs – simultaneous sessions exceed allowed concurrency and cause session token desync.
+
+Legacy device/browser – older hardware struggles to run real-time UI updates.
+
+5.3 Troubleshooting Steps
+
+Check Ticket Volume
+
+If the inbox contains >3,000 open tickets, the system may throttle UI rendering.
+
+Narrow the date filter.
+
+Clear Local Cache
+
+In browser dev tools:
+Storage → Clear Local Storage for domain → Refresh
+
+Disable Extensions One-by-One
+
+Privacy-focused extensions often block WebSocket connections.
+
+Reduce Tab Count
+
+HelpDeskFlow supports 3 active tabs; more tabs cause session key conflicts.
+
+Switch to Lightweight View Mode
+
+Admins can enable this under Workspace Settings → Advanced → Lightweight Mode
+
+This disables animation-heavy components.
+
+Escalate if:
+
+Performance does not improve after lightweight mode
+
+Logs show multiple WebSocket disconnects
+
+Browser crashes or freezes repeatedly
+
+6. Failed Exports (CSV / Excel)
+
+6.1 Symptoms
+
+Export stuck at “Preparing”
+
+Export email never received
+
+Export file corrupted
+
+Export returns fewer records than expected
+
+6.2 Root Causes
+
+Export exceeds 50,000 record limit
+
+Invalid date range
+
+Underlying job worker stalled
+
+Incorrect data encoding (UTF-8 mismatch)
+
+Customer selected unsupported field combinations
+
+6.3 Troubleshooting Steps
+
+Check Export Limit
+
+If the request exceeds the hardcoded 50,000 record limit, the export will fail silently.
+
+Verify Date Range
+
+Very large date ranges cause backpressure on job queues.
+
+Check Export Logs
+
+Under Reports → Export Logs, each export has a job ID showing its real-time status.
+
+Attempt a Smaller Export
+
+Use a narrower date range to test system behaviour.
+
+Verify Email Delivery
+
+If the export file is auto-emailed, check spam folder or domain filtering.
+
+Escalate if:
+
+Logs show EXPORT_WORKER_TIMEOUT
+
+All exports fail across multiple workspaces
+
+File arrives with partially missing rows
+
+7. Incorrect Ticket Assignment (Auto-routing Issues)
+
+7.1 Symptoms
+
+Tickets assigned to wrong agent
+
+Tickets bouncing between agents
+
+Unassigned tickets piling up
+
+Agents receiving irrelevant issue types
+
+7.2 Root Causes
+
+Multiple rules modifying assignment
+
+Team availability schedules misconfigured
+
+Skill-based routing tags missing
+
+Agents marked as “Away” without system updating
+
+Automation loop (rare, but possible)
+
+7.3 Troubleshooting Steps
+
+Check Automation Logs
+
+Navigate to Automation → Logs
+
+Look for rule IDs that triggered assignment.
+
+Verify Team Settings
+
+Ensure that the assigned team has at least one active member.
+
+Check Agent Status
+
+Agents marked as offline or on leave cannot receive tickets.
+
+Inspect Ticket Tags
+
+Missing or outdated tags affect skill-based routing.
+
+Run “Simulate Rule”
+
+Helps identify which rule should have triggered and why it didn’t.

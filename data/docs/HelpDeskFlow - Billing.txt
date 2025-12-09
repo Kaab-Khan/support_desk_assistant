@@ -1,0 +1,329 @@
+HelpDeskFlow – Refund, Returns & Cancellation Policy
+
+Document Type: Public
+Version: v1.8
+Last Updated: 12 Jan 2025
+Owner: Billing & Finance Team
+Status: Published
+
+1. Overview
+
+This policy outlines the conditions, procedures, and limitations related to:
+
+refunds
+
+cancellations
+
+plan downgrades
+
+billing errors
+
+credits
+
+proration
+
+exceptions
+
+It is applicable to all HelpDeskFlow subscription plans, including Basic, Pro, and Enterprise.
+
+This document is intended for both customers and internal support agents who must follow official billing rules when responding to refund-related queries.
+
+2. Refund Eligibility Criteria
+
+2.1 Full Refund Eligibility
+
+Customers are eligible for a full refund if all of the following conditions are met:
+
+The request is made within:
+
+14 days of purchase for Annual plans
+
+30 days of purchase for Monthly plans
+
+No more than 20% of the allotted monthly ticket limit has been used
+
+No custom onboarding or implementation work has been delivered
+
+The account does not have an active dispute or chargeback
+
+Internal Note:
+
+Agents must verify usage:
+
+Dashboard → Billing → Usage → Ticket Volume
+
+If usage exceeds 20%, escalate to Billing Review.
+
+2.2 Partial Refund Eligibility
+
+Partial refunds may be issued in the following scenarios:
+
+A. Prorated refunds for annual plans
+
+If cancellation occurs after 14 days
+
+Remaining months are prorated at 80% value
+
+A processing fee of £20 applies
+
+B. Overcharges due to billing errors
+
+Refund amount = Overcharged amount + 10% goodwill credit
+(Internal agents must attach billing logs.)
+
+C. Downgrade mid-cycle
+
+If moving from Pro → Basic:
+
+Difference is credited as account balance
+
+Credits apply automatically in the next billing cycle
+
+2.3 Non-Refundable Items
+
+Refunds cannot be issued for:
+
+Onboarding sessions
+
+Custom integrations
+
+Add-ons purchased outside subscription
+
+SMS or Email credits used
+
+Charges older than 90 days
+
+Accounts terminated for TOS violations
+
+Internal rule:
+
+If customer disputes non-refundable items, agents may offer:
+
+10% credit
+
+One-month Basic extension
+Based on manager approval.
+
+3. Cancellation Policy
+
+3.1 How Customers Can Cancel (Steps)
+
+Customers can cancel from the dashboard:
+
+Go to Settings → Billing
+
+Select Manage Subscription
+
+Click Cancel Plan
+
+Choose a reason (mandatory)
+
+Confirm cancellation
+
+Once cancellation is done:
+
+Subscription will remain active until the end of billing cycle
+
+No further invoices will be generated
+
+Users will retain access to tickets
+
+Account enters read-only mode after expiry
+
+Internal Agent Instructions
+
+If cancelling on behalf of customer:
+
+Verify identity via security questions
+
+Add cancellation reason
+
+Add internal note:
+“Cancelled by agent per customer request via chat/phone.”
+
+Save confirmation email copy in logs
+
+3.2 Forced Cancellation (Internal Operations Only)
+
+Used when:
+
+Customer violated TOS
+
+Customer requested data deletion
+
+Repeated failed payments
+
+Procedure:
+
+Suspend workspace
+
+Export customer data
+
+Execute termination script
+
+Validate deletion (internal audit)
+
+Notify customer
+
+4. Proration Rules (Deep Explanation)
+
+4.1 When Proration Applies
+
+Proration happens when customers:
+
+add agents
+
+remove agents
+
+upgrade plan
+
+downgrade plan
+
+Formula:
+
+Prorated amount = (Remaining days ÷ Total cycle days) × Charge difference
+
+Example Scenario
+
+Customer upgrades from Basic (£19) to Pro (£39) on day 10 of a 30-day cycle:
+
+Remaining days = 20
+Plan difference = £20
+
+Prorated amount = (20/30) × 20 = £13.33
+
+This is charged instantly.
+
+4.2 Removing agents mid-cycle
+
+Removing an agent does not issue an immediate refund
+
+Instead, customer receives credit
+
+Credit applies next invoice
+
+Internal agents must check:
+
+Billing → Team Member History
+
+to ensure removal timestamp is correctly logged.
+
+5. Billing Errors
+
+5.1 Types of Billing Errors
+
+Duplicate charge
+
+Incorrect agent count
+
+Plan downgrade not applied
+
+Coupon not applied
+
+Currency conversion mismatch
+
+5.2 Corrective Actions
+
+Duplicate charge:
+
+Refund full duplicate amount
+
+Issue 10% credit
+
+Log incident as Billing_002
+
+Incorrect agent count:
+
+Adjust count
+
+Recalculate charges
+
+Issue credit for excess amount
+
+6. Payment Failures & Grace Period
+
+6.1 Payment Attempts
+
+HelpDeskFlow retries failed payments in this sequence:
+
+Day 0 – initial attempt
+
+Day 3 – retry 1
+
+Day 7 – retry 2
+
+Day 10 – final attempt
+
+6.2 Grace Period
+
+Access continues during:
+
+Days 0–10: unrestricted
+
+Days 11–15: restricted mode
+
+After Day 15: account suspension
+
+Restricted Mode Details
+
+Agents can view tickets
+
+Cannot reply to tickets
+
+Cannot add users
+
+Cannot create new tickets
+
+7. Chargebacks
+
+7.1 What is a chargeback?
+
+When a customer disputes a payment directly with the bank.
+
+7.2 HelpDeskFlow Chargeback Policy
+
+Immediate account suspension
+
+£35 investigation fee
+
+10 business days review period
+
+Internal Agent Responsibilities
+
+Collect invoice copies
+
+Collect activity logs
+
+Submit documentation to finance
+
+Depends on bank decision.
+
+8. Refund Processing Timeline
+
+Total: 7–17 days
+
+9. Credits System
+
+9.1 Types of Credits
+
+Billing error credits
+
+Goodwill credits
+
+SLA breach credits
+
+Downgrade credits
+
+9.2 How credits apply
+
+Credits apply automatically to the next invoice.
+
+Credits expire in 12 months.
+
+10. Customer Data Retention After Cancellation
+
+Data Deletion Request
+
+Handled via:
+support@helpdeskflow.com
+Processed within 30 days.

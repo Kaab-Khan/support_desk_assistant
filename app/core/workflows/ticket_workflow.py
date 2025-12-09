@@ -9,9 +9,8 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
-from app.rag_service import RagService, get_rag_service
-from app.summariser import SummariserService, get_summariser_service
-from app import crud
+from app.core.services.rag_service import RagService, get_rag_service
+from app.infrastructure.repositories import ticket_repository
 
 
 # Module-level cache for TicketAgentService singleton
@@ -21,30 +20,27 @@ _ticket_agent_service: Optional["TicketAgentService"] = None
 class TicketAgentService:
     """
     Service for processing support tickets using AI-powered triage.
-    
-    Orchestrates RAG, summarisation, and CRUD operations to analyze tickets,
+
+    Orchestrates RAG and CRUD operations to analyze tickets,
     recommend actions, and persist decisions.
     """
-    
+
     def __init__(
         self,
         rag_service: RagService,
-        summariser_service: SummariserService,
     ) -> None:
         """
         Initialize the ticket agent service.
 
         Args:
-            rag_service: RAG service used for knowledge-base grounded answers.
-            summariser_service: Service used for summarisation/tagging helpers.
+            rag_service: RAG service used for knowledge-base grounded answers and tag extraction.
 
-        - Store the service instances for later use.
+        - Store the service instance for later use.
         - Configure any agent-level defaults (e.g., action types).
         """
         self._rag_service = rag_service
-        self._summariser = summariser_service
         self._default_actions = ["reply", "escalate", "close"]
-    
+
     def process_ticket(
         self,
         db: Session,
@@ -69,37 +65,40 @@ class TicketAgentService:
         - Decide an action and generate a reply/reason.
         - Persist the ticket via CRUD (create_ticket / update_ticket_agent_result).
         """
-        # Use RAG to propose a reply grounded in knowledge base
+        # Use RAG to get answer AND tags in a single call
         rag_result = self._rag_service.answer(text)
+
+        # Extract results from RAG (now includes tags!)
+        answer = rag_result.get("answer", "")
+        tags = rag_result.get("tags", [])
+        confidence = rag_result.get("confidence", "low")
         
-        # Use summariser to get tags
-        summary_result = self._summariser.summarise(text)
-        
-        # Extract tags from summary result
-        tags = summary_result.get("tags", [])
+        # Ensure tags is a list
         if not isinstance(tags, list):
             tags = []
         
-        # Decide action based on RAG result
-        answer = rag_result.get("answer", "")
-        if answer and answer.strip():
+        # Check if RAG returned valid answer or insufficient context marker
+        if answer and answer.strip() and "INSUFFICIENT_CONTEXT" not in answer:
             action = "reply"
             reason = "Generated reply using knowledge base context via RAG."
         else:
             action = "escalate"
-            reason = "Could not generate automated reply; escalating to human agent."
-        
+            if "INSUFFICIENT_CONTEXT" in answer:
+                reason = "Knowledge base lacks sufficient information; escalating to human agent."
+            else:
+                reason = "Could not generate automated reply; escalating to human agent."
+
         # Persist ticket to database
-        ticket = crud.create_ticket(
+        ticket = ticket_repository.create_ticket(
             db=db,
             text=text,
             action=action,
-            reply=answer if answer else None,
+            reply=answer if action == "reply" else None,
             tags=tags,
             reason=reason,
             human_label=None,
         )
-        
+
         # Build and return response
         return {
             "id": ticket.id,
@@ -114,20 +113,20 @@ def get_ticket_agent_service() -> TicketAgentService:
     """
     Return a singleton instance of TicketAgentService.
 
-    Initializes the service on first call using shared RagService and
-    SummariserService instances, and caches it for subsequent calls.
+    Initializes the service on first call using shared RagService
+    instance, and caches it for subsequent calls.
 
     Returns:
         TicketAgentService: The singleton ticket agent service.
     """
     global _ticket_agent_service
-    
+
     if _ticket_agent_service is None:
         rag_service = get_rag_service()
-        summariser_service = get_summariser_service()
         _ticket_agent_service = TicketAgentService(
             rag_service=rag_service,
-            summariser_service=summariser_service,
         )
-    
+
     return _ticket_agent_service
+
+

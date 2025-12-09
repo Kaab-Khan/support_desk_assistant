@@ -1,0 +1,163 @@
+HelpDeskFlow
+
+Compliance, Data Protection & GDPR Handling Manual
+
+Document Type: Internal
+Version: 4.5
+Last Updated: 26 Jan 2025
+Owner: Legal & Compliance Department
+Status: Restricted – Internal Only**
+
+1. Introduction
+
+This document outlines HelpDeskFlow’s full data compliance framework, including:
+
+GDPR obligations
+
+customer data handling rules
+
+right-to-access and deletion procedures
+
+data retention schedules
+
+internal access controls
+
+international data transfers
+
+breach reporting obligations
+
+agent responsibility protocols
+
+It is designed for agents, managers, and engineers who handle or interact with customer data in any form.
+
+Every bullet has been expanded into multi-sentence, context-rich explanations to maximise depth for your RAG system.
+
+2. Data Classification & Sensitivity Levels
+
+2.1 Data Classification Categories (Deep Explanation)
+
+Public Data – This includes information HelpDeskFlow publishes openly, such as pricing pages, product descriptions, and API documentation. Public data poses the least risk if disclosed, but must still be kept correct and up to date, because inaccurate public information can cause compliance issues in regulated jurisdictions.
+
+Internal Operational Data – This consists of system logs, internal process documents, staff notes, routing rules, and support workflows. While this data does not contain customer identities, it may reveal internal infrastructure details; therefore, it must not be shared externally to avoid exposing operational vulnerabilities.
+
+Customer Personal Data (CPD) – This includes any information that directly or indirectly identifies a customer: names, email addresses, phone numbers, login timestamps, IP addresses, message content, and workspace IDs. This data is protected under GDPR, and all access to it must be logged and justified.
+
+Sensitive Personal Data (SPD) – HelpDeskFlow rarely handles sensitive categories (e.g., health or financial data), but any such data that customers include in tickets accidentally must be treated with heightened caution. Agents must avoid duplicating or exporting such content and must redact it where appropriate.
+
+3. GDPR Roles & Responsibilities
+
+3.1 HelpDeskFlow as Data Processor
+
+HelpDeskFlow acts as a “data processor” when a customer uploads personal information into the platform, meaning we process data on behalf of the customer (the “controller”). This determines our legal obligations — we follow their instructions, implement security, and never repurpose data.
+
+As a processor, HelpDeskFlow must ensure that any subcontractors (e.g., cloud hosting providers, email delivery services, file scanning vendors) are also compliant, because GDPR requires processors to only engage sub-processors who meet equivalent standards.
+
+3.2 Customers as Data Controllers
+
+Customers determine which personal data enters the platform, which means they decide what is collected, stored, and deleted. HelpDeskFlow cannot override these decisions unless they conflict with security or legal obligations.
+
+4. Access Control & Internal Permissions Framework
+
+4.1 Role-Based Access Control (RBAC)
+
+HelpDeskFlow enforces strict RBAC, meaning employees only access the minimum amount of data needed for their job, following the “principle of least privilege.” This ensures junior agents cannot view sensitive engineering logs, and engineers cannot view random customer tickets without a documented reason.
+
+Permission escalation requests must be approved by both the Support Lead and Compliance Lead, and all escalations expire after 48 hours, requiring re-approval if needed again. This prevents long-term privilege creep.
+
+4.2 Data Access Logging
+
+Every time an employee views a ticket or customer profile, a log entry is created, including employee ID, timestamp, IP address, and the specific resource accessed. These logs are reviewed monthly to detect unusual patterns of access.
+
+Unusual access patterns (e.g., large batches of unrelated customer profiles) trigger automatic alerts, and the Compliance team must investigate within 24 hours. This prevents data harvesting and insider threat scenarios.
+
+5. Customer Data Requests (DSAR) – Right of Access
+
+5.1 How Agents Handle DSAR Requests
+
+When a customer requests all data about them, agents must collect ticket history, message content, attachments, logs, and metadata, ensuring no customer-related data is omitted. DSARs must be completed within 30 days by law.
+
+Agents must not provide internal notes, internal staff messages, or system-level data, because GDPR only grants access to data directly related to the customer, not internal operational details.
+
+5.2 Verification Before Processing DSAR
+
+Agents must verify identity via email confirmation or two-factor method, ensuring the requester truly owns the account. DSAR responses must not be sent to unverified addresses to avoid privacy violations.
+
+6. Data Deletion Requests (“Right to be Forgotten”)
+
+6.1 Deletion Workflow
+
+When a customer requests deletion, HelpDeskFlow must erase all personal data including profile information, ticket history, attachments, and timestamps, unless legal or financial obligations require retention (e.g., tax invoices).
+
+Before deletion, agents must confirm whether the customer wants the entire workspace deleted or only their individual profile, because deleting a workspace removes multiple users.
+
+6.2 Permanent Deletion Timeline
+
+Data moves into a “pending deletion” state for 14 days, during which recovery is possible if the customer rescinds the request.
+
+After 14 days, data deletion becomes irreversible, and the platform overwrites the files and clears indexes from the search infrastructure.
+
+7. Data Retention & Storage Policies
+
+7.1 Ticket Retention Rules
+
+Tickets are stored for 12 months on the Basic plan and 24 months on Pro, unless the customer manually deletes them, allowing businesses to manage storage volumes. Tickets older than the retention period are archived and removed from primary storage.
+
+Attachment files are held for 180 days, because attachments increase storage requirements significantly and seldom need long-term retention.
+
+7.2 Log Retention
+
+System logs are kept for 90 days, because they contain sensitive operational data and are prone to misuse if retained indefinitely. These logs include request metadata, API calls, and agent interactions, but exclude message bodies.
+
+7.3 Billing Records
+
+Billing and invoice data are retained for 7 years, due to tax and regulatory requirements. These records are stored separately from operational systems to comply with financial audit standards.
+
+8. Data Security & Encryption
+
+8.1 Encryption in Transit
+
+All API and dashboard connections occur over HTTPS using TLS 1.2 or later, preventing eavesdropping and tampering. Any requests made over HTTP are automatically redirected to HTTPS.
+
+8.2 Encryption at Rest
+
+Customer data, including messages, attachments, and metadata, is stored using AES-256 encryption at rest, meaning even if physical disks were compromised, the data would not be readable without the encryption keys.
+
+8.3 Key Management
+
+Encryption keys are stored in a Hardware Security Module (HSM) and rotated automatically every 90 days. No engineer or employee has direct access to these keys, eliminating manual handling risks.
+
+9. International Data Transfers
+
+9.1 Regional Storage Rules
+
+EU customers’ data is stored exclusively in the EU data region (Ireland) unless they explicitly request a different region. This complies with GDPR geographic rules and prevents unlawful data transfer.
+
+Enterprise customers can request custom storage regions, but this may affect latency and routing reliability.
+
+9.2 Standard Contractual Clauses (SCC)
+
+When data is transferred outside the EU, HelpDeskFlow uses Standard Contractual Clauses, ensuring legal protections equivalent to GDPR even in non-EU jurisdictions.
+
+10. Data Breach Reporting & Response Plan
+
+10.1 Internal Breach Response Steps
+
+Any employee who suspects a breach must notify the Security Officer immediately, even if they are unsure. Compliance must investigate within 4 hours to determine severity.
+
+Engineering must gather logs, isolate affected systems, and identify impacted accounts, ensuring the breach does not propagate further.
+
+10.2 External Notification Requirements
+
+If a breach involves personal data, HelpDeskFlow must notify the affected customer (data controller) within 72 hours, as required by GDPR. Notifications must include nature, scope, and recommended mitigation steps.
+
+HelpDeskFlow must never contact the end users directly, because our contractual relationship is with the controller, not their customers.
+
+11. Forbidden Agent Actions
+
+11.1 Actions That Violate Compliance
+
+Agents must never export customer tickets or attachments outside the platform, unless explicitly approved for engineering reproduction. Screenshots must be redacted.
+
+Agents must never forward customer messages to personal email, even for temporary convenience. Doing so creates an untracked data leak.
+
+Never retain customer data in personal notes, messaging apps, or local files, because these pathways are not covered by HelpDeskFlow’s security controls.

@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from app.models import Ticket
+from app.infrastructure.db.models import Ticket
 
 
 def create_ticket(
@@ -32,25 +32,25 @@ def create_ticket(
         tags: Optional list of tags to attach (will be stored as string).
         reason: Optional explanation for the chosen action.
         human_label: Optional human feedback label.
-    
+
     Returns:
         The newly created Ticket ORM instance.
     """
     tags_str = ",".join(tags) if tags is not None else None
-    
+
     ticket = Ticket(
         text=text,
         action=action,
         reply=reply,
         tags=tags_str,
         reason=reason,
-        human_label=human_label
+        human_label=human_label,
     )
-    
+
     db.add(ticket)
     db.commit()
     db.refresh(ticket)
-    
+
     return ticket
 
 
@@ -110,20 +110,20 @@ def update_ticket_agent_result(
         The updated Ticket instance if found, otherwise None.
     """
     ticket = get_ticket(db, ticket_id)
-    
+
     if ticket is None:
         return None
-    
+
     ticket.action = action
     ticket.reply = reply
     ticket.reason = reason
-    
+
     if tags is not None:
         ticket.tags = ",".join(tags)
-    
+
     db.commit()
     db.refresh(ticket)
-    
+
     return ticket
 
 
@@ -144,13 +144,13 @@ def update_ticket_feedback(
         The updated Ticket instance if found, otherwise None.
     """
     ticket = get_ticket(db, ticket_id)
-    
+
     if ticket is None:
         return None
-    
+
     ticket.human_label = human_label
-    
+
     db.commit()
     db.refresh(ticket)
-    
+
     return ticket

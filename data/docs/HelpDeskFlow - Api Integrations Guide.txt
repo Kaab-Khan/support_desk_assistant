@@ -1,0 +1,134 @@
+HelpDeskFlow
+
+API & Integrations Guide
+
+Document Type: Internal + External Hybrid
+Version: 4.2
+Owner: Engineering – Integrations Team
+Status: Published
+
+1. Introduction
+
+The HelpDeskFlow API allows external systems to create, update, and synchronize tickets, customers, conversations, and events. This document explains every aspect of API use in long-form, operational detail — including authentication, rate limits, payload validation, webhook delivery, integration flows, and common troubleshooting diagnostics.
+
+Each bullet point is intentionally expanded into full paragraphs to ensure your RAG system has rich semantic structure to reason over.
+
+2. Authentication & Security
+
+2.1 API Key Authentication (Primary Method)
+
+API keys uniquely identify a workspace and grant full programmatic access to its ticketing system, meaning that any request made using this key is treated as if a privileged admin within that workspace is performing the action. Keys must be protected because they bypass user-level restrictions and permit access to sensitive data, including customer information and internal ticket notes.
+
+API keys must be sent in the Authorization header using the Bearer format, because HelpDeskFlow does not allow API keys in query parameters or inside request payloads. This is a security measure designed to prevent accidental exposure through server logs or URL sharing.
+
+Keys do not expire automatically but must be rotated periodically to maintain security posture, especially if multiple developers have access to them. Internally, HelpDeskFlow logs every API request and ties it to the specific key used, so compromised keys can be traced and disabled instantly.
+
+If an API key is revoked or deleted, all requests using that key immediately return a 401 Unauthorized status, because the key lookup in the authorization middleware fails and the request is blocked before reaching any business logic. This is why integrations break instantly when keys are rotated without updating external systems.
+
+2.2 Workspace-Level OAuth Tokens (For Third-Party Services)
+
+OAuth tokens are used when HelpDeskFlow connects to other services, such as Slack, Gmail, Outlook, Shopify, or Stripe, because these external platforms require delegated access where the user grants permission without sharing their username or password. OAuth tokens reflect the exact scope of access granted by the user.
+
+When a user authorizes HelpDeskFlow via OAuth, the external service issues both an access token and a refresh token, where the access token allows immediate API calls and the refresh token allows HelpDeskFlow to silently renew access before expiry. Refresh tokens are stored encrypted and cannot be viewed again after creation.
+
+If an OAuth refresh process fails — for example, because the external system has revoked permissions — the integration becomes inactive, and HelpDeskFlow marks the integration as “Token Expired,” disabling all syncs until the user manually reconnects. This prevents half-functioning integrations from corrupting data or triggering partial syncs.
+
+3. Rate Limits & Throttling
+
+3.1 Rate Limiting Rules
+
+Rate limits exist to prevent a single customer from overwhelming shared infrastructure, ensuring fair system performance for all workspaces. Limits are applied per API key, and each category of action (ticket creation, updates, customer lookups) is allocated its own bucket to prevent unrelated operations from affecting each other.
+
+When a rate limit is exceeded, the API responds with HTTP 429, and includes a “Retry-After” header that tells the client exactly how long it must wait before retrying. This prevents developers from continuously hammering the server and causing further blockage.
+
+HelpDeskFlow uses a sliding time-window algorithm to count API requests, meaning the counter decreases gradually rather than resetting all at once. This helps smooth out bursty workloads and prevents synchronized API pushes from causing server load spikes.
+
+If a workspace repeatedly exceeds rate limits for more than 10 minutes, it is automatically moved to a soft-throttle mode, which injects small artificial delays into responses. This protects the platform while still keeping the integration functional, but at reduced speed.
+
+4. Ticket API (Deep, Bullet-Rich Section)
+
+4.1 Creating Tickets via API
+
+When an external system sends a POST request to create a ticket, HelpDeskFlow first validates the entire payload structure, including making sure required fields like customer.email and subject are present. The validation layer checks for correct types, value formats, and maximum sizes (e.g., no message body exceeding 50,000 characters).
+
+If the customer does not exist, the system automatically creates a new customer profile using the supplied email. If the customer already exists, the system attaches the new ticket to their history. This means the ticket creation endpoint also doubles as a customer creation endpoint.
+
+All payload content is sanitized before being stored, including removing harmful HTML tags or scripts from message bodies. This protects both the agent interface and the notification system from malicious content or formatting anomalies.
+
+Automation rules are triggered immediately after ticket creation, meaning tags may be added, the ticket may be auto-assigned to a team, or priority may be modified before the response is even returned to the API client. Automations are executed in strict order of priority to maintain deterministic behaviour.
+
+4.2 Reading Tickets via API
+
+When a ticket is retrieved, the system constructs a composite response by merging data from multiple internal services, including ticket metadata, message history, customer details, tags, SLA status, and assignments. This multi-source read ensures the caller receives a complete view of the ticket.
+
+The API will not include internal notes unless the request explicitly includes include_internal=true, because internal notes are intended for agent collaboration only and may include sensitive operational details. This flag is restricted to admin-level API keys.
+
+The message list returned by the API is ordered chronologically from oldest to newest, to maintain consistency with the UI and prevent confusion when debugging threads.
+
+4.3 Updating Tickets via API
+
+When a ticket update occurs (such as changing the priority or adding a tag), HelpDeskFlow applies the update using strict row-level locking, preventing concurrent API calls or automations from corrupting the ticket state. Lock duration is kept under 50ms to avoid blocking other processes.
+
+Every update triggers a secondary automation pass, meaning rules that depend on priority changes, tag updates, or customer replies will execute immediately. This cascading logic ensures consistency but also means developers must design updates carefully to avoid triggering unwanted workflows.
+
+All updates are versioned in the audit log, allowing administrators to trace exactly what changed, who made the change, and whether it was triggered by an API, automation rule, or agent action.
+
+5. Customer API (Expanded Bullet Explanation)
+
+5.1 Creating or Updating Customers
+
+The Customer API automatically handles merging when multiple profiles share the same email, ensuring that related tickets remain unified and customer history is not fragmented. Duplicate detection uses email as the primary key and compares normalized addresses (lowercase, trimmed whitespace).
+
+Custom fields can be added dynamically to store workspace-specific data, such as customer tier, subscription level, geographical region, or internal identifiers. These fields can then be used in automation rules, routing rules, or advanced filters.
+
+Customer records support tag lists, unlimited metadata fields, and linked third-party profiles, which allows external systems (like Shopify or Stripe) to attach contextual details used in advanced workflow automation.
+
+6. Webhooks (Deep, Multi-Sentence Bullets)
+
+6.1 How Webhooks Work
+
+Webhooks notify external systems when events occur inside HelpDeskFlow, such as ticket creation, ticket updates, SLA warnings, or customer profile changes. This allows external platforms to act immediately without polling the API.
+
+When a webhook event occurs, HelpDeskFlow places the event into the webhook queue where it undergoes formatting, signature hashing, and delivery preparation, ensuring that even high-volume workspaces can process events reliably without delaying UI interactions.
+
+Each webhook delivery includes a cryptographic signature (X-HDF-Signature) generated using HMAC-SHA256, allowing the receiving server to verify that the request originated from HelpDeskFlow and that the payload was not tampered with.
+
+If the receiving endpoint returns a non-2xx status or times out after three seconds, HelpDeskFlow automatically retries delivery, using an exponential backoff strategy. After the third failed attempt, the event is marked as permanently failed and logged for later review.
+
+7. Gmail, Outlook, Slack & CRM Integrations (Rich Bullets)
+
+7.1 Gmail Integration
+
+Gmail integrations rely on Google OAuth, meaning customers must grant permission for HelpDeskFlow to read and send emails on their behalf, without requiring IMAP credentials or passwords. This makes the integration secure and easy to maintain.
+
+When connected, Gmail syncs every 20 seconds, pulling new messages and converting them into tickets, applying all relevant automations such as tagging or team assignment. Google rate limits are respected to avoid sync delays.
+
+7.2 Outlook Integration
+
+Outlook integrations use IMAP/SMTP credentials rather than OAuth, because Microsoft does not provide a uniform API across all account types. This means customers must generate an app password and manually enter server connection details.
+
+Outlook sync runs less frequently — every 60 seconds — due to IMAP limitations, and may require customers to whitelist HelpDeskFlow’s IP addresses if their IT department enforces IP filtering.
+
+7.3 Slack Integration
+
+Slack integrations allow HelpDeskFlow to post ticket notifications directly into channels, keeping teams updated in real time about new tickets, escalations, and SLA risks.
+
+Slack tokens expire or break whenever workspace permissions change, so customers must frequently revalidate the integration to maintain seamless notifications.
+
+8. Troubleshooting API & Integration Issues
+
+8.1 Diagnosing API Errors
+
+400 errors typically indicate malformed payloads, where required fields are missing, JSON syntax is incorrect, or field types do not match expected formats. The system returns detailed error messages so developers can fix issues quickly.
+
+401 errors indicate authentication failures, usually because of an invalid, expired, or incorrectly formatted API key. This may also occur if the request originates from a blocked IP address.
+
+500 errors are usually automation conflicts, meaning a rule tried to perform an action that contradicted another rule or the ticket’s current state. Logs show rule IDs involved.
+
+8.2 Diagnosing Webhook Failures
+
+Webhook failure logs include the target URL, HTTP status code, response body, and the exact timestamp, allowing developers to reproduce failures easily.
+
+Most webhook failures occur due to SSL issues, such as expired certificates or misconfigured TLS settings.
+
+Signature mismatches usually indicate that the receiving server did not use the correct webhook secret, causing verification to fail.
