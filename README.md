@@ -264,9 +264,27 @@ Once the server is running, visit:
 
 ## Production Deployment
 
+### Docker Deployment
+
+The application includes a production-ready `Dockerfile` that uses Python 3.10.12 and Gunicorn with Uvicorn workers.
+
+#### Build and Run Locally
+
+```bash
+# Build the Docker image
+docker build -t support-desk-assistant .
+
+# Run the container
+docker run -p 8000:8000 \
+  -e OPENAI_API_KEY=your_key \
+  -e PINECONE_API_KEY=your_key \
+  -e PINECONE_INDEX_NAME=support-desk-assistant-docs \
+  support-desk-assistant
+```
+
 ### Deploying to Render
 
-Render provides a straightforward platform for deploying FastAPI applications with automatic HTTPS, environment variables, and PostgreSQL support.
+Render provides a straightforward platform for deploying FastAPI applications with automatic HTTPS, environment variables, and PostgreSQL support. You can deploy using either Docker or native Python.
 
 #### Prerequisites
 
@@ -294,13 +312,24 @@ Render provides a straightforward platform for deploying FastAPI applications wi
 3. Connect your GitHub repository
 4. Configure your service:
 
+**Deployment Method:**
+
+Choose one of the following:
+
+**Option A: Docker (Recommended)**
+- **Environment**: `Docker`
+- **Dockerfile Path**: `Dockerfile` (default)
+- Render will automatically detect and use the Dockerfile
+
+**Option B: Native Python**
+- **Environment**: `Python 3`
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT`
+
 **Basic Settings:**
 - **Name**: `ai-support-desk-assistant`
 - **Region**: Same as your database
 - **Branch**: `main`
-- **Runtime**: `Python 3`
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 **Environment Variables:**
 
@@ -358,6 +387,12 @@ If you need to populate Pinecone with documentation:
 3. **Start Command**: `python scripts/ingest_docs.py`
 
 #### Additional Configuration
+
+**Docker-Specific Notes:**
+- The Dockerfile uses Python 3.10.12 (as specified in `runtime.txt`)
+- Gunicorn with Uvicorn workers for better production performance
+- Health checks included for automatic monitoring
+- The `$PORT` environment variable is automatically set by Render
 
 **Custom Domain:**
 1. Go to service **Settings**
@@ -440,13 +475,17 @@ If you need to populate Pinecone with documentation:
 
 ### Alternative Deployment Options
 
-For non-Render deployments:
+**Using Docker:**
+- **AWS ECS/Fargate**: Use the Dockerfile for containerized deployment
+- **Google Cloud Run**: Deploy directly from Dockerfile
+- **Azure Container Instances**: Build and deploy with Docker
+- **DigitalOcean App Platform**: Supports Docker deployments
 
-1. **AWS/GCP/Azure**: Use containerized deployment with Docker
-2. **Railway**: Similar to Render with PostgreSQL support
-3. **Fly.io**: Edge deployment for low latency
-4. **DigitalOcean App Platform**: Managed platform with databases
-5. **Self-hosted**: Use nginx + Uvicorn + systemd
+**Native Python:**
+- **Railway**: Similar to Render with PostgreSQL support
+- **Fly.io**: Edge deployment for low latency
+- **Heroku**: Use Procfile with Gunicorn
+- **Self-hosted**: Use nginx + Gunicorn + systemd
 
 ## Troubleshooting
 
