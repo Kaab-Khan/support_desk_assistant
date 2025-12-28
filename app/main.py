@@ -35,3 +35,7 @@ app.include_router(endpoints.router, prefix="/api/v1", tags=["v1"])
 def health_check():
     """Health check endpoint."""
     return {"status": "healthy", "version": "0.1.0"}
+
+@app.get("/")
+def home():
+    return {"name": "Support Desk Assistant", "docs": "/docs", "health": "/health"}
