@@ -15,7 +15,7 @@ An enterprise-grade FastAPI application that automates support ticket triage usi
 ## Technology Stack
 
 - **Backend**: FastAPI 0.115.5
-- **Language**: Python 3.10+
+- **Language**: Python 3.10.12 (see `runtime.txt`)
 - **Database**: SQLite with SQLAlchemy 2.0.23
 - **Vector Store**: Pinecone (Serverless AWS us-east-1)
 - **LLM**: OpenAI GPT-4o-mini
