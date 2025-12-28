@@ -4,8 +4,6 @@ SQLAlchemy ORM models for database tables.
 Defines the database schema for support tickets and related entities.
 """
 
-from datetime import datetime
-
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.sql import func
 

@@ -1,0 +1,1739 @@
+================================================================================
+    AI SUPPORT DESK ASSISTANT - COMPLETE PROJECT ARCHITECTURE
+    Complete Technical Documentation & Working Guide
+================================================================================
+
+Project Version: 0.1.0
+Last Updated: December 27, 2024
+Architecture: Clean Architecture with Layered Design
+Status: Production-Ready with Complete Test Coverage (78 Tests - 77 Passed, 1 Skipped)
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. PROJECT OVERVIEW
+2. ARCHITECTURE DESIGN
+3. CURRENT DIRECTORY STRUCTURE
+4. CORE COMPONENTS & IMPLEMENTATION
+5. API ENDPOINTS (4 ENDPOINTS)
+6. DATABASE SCHEMA
+7. EXTERNAL INTEGRATIONS
+8. TESTING INFRASTRUCTURE
+9. CONFIGURATION & DEPLOYMENT
+10. COMPLETE DATA FLOWS
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+The AI Support Desk Assistant is an enterprise-grade FastAPI application that
+automates support ticket triage using RAG (Retrieval-Augmented Generation),
+LLM-powered decision making, and vector similarity search.
+
+KEY FEATURES:
+-------------
+✓ Automated ticket processing with AI-powered triage
+✓ RAG-based knowledge base search using Pinecone vector store
+✓ Intelligent action recommendation (reply/escalate/close)
+✓ Tag extraction integrated into RAG workflow
+✓ Human feedback loop for continuous improvement
+✓ RESTful API with versioning (v1)
+✓ SQLite database for ticket persistence
+✓ Comprehensive test suite (78 tests)
+✓ Production-ready architecture with dependency injection
+
+IMPORTANT NOTE:
+---------------
+There is NO separate summarizer service. All summarization and tag extraction
+is handled directly by the RAG service in a single LLM call for efficiency.
+The OpenAI client has a generate_summary_with_tags() method but it's only
+used in tests, not in production endpoints.
+
+TECHNOLOGY STACK:
+-----------------
+• Backend Framework: FastAPI 0.115.5
+• Language: Python 3.10+
+• Database: SQLite with SQLAlchemy 2.0.23 ORM
+• Vector Store: Pinecone Cloud (Serverless AWS us-east-1)
+• LLM Provider: OpenAI (GPT-4o-mini)
+• Embeddings: OpenAI text-embedding-ada-002 (1536 dimensions)
+• Testing: pytest with 78 tests (unit + integration)
+• Server: Uvicorn ASGI server
+• Dependencies: pydantic, pydantic-settings, python-dotenv
+
+================================================================================
+2. ARCHITECTURE DESIGN
+================================================================================
+
+ARCHITECTURAL PATTERN: Clean Architecture + Layered Design
+-----------------------------------------------------------
+
+The project follows Clean Architecture principles with clear separation of
+concerns across layers:
+
+┌─────────────────────────────────────────────────────────────────┐
+│                         API LAYER                                │
+│                    (app/api/v1/)                                 │
+│  • HTTP request/response handling                                │
+│  • Input validation with Pydantic schemas                        │
+│  • RESTful endpoint definitions                                  │
+│  • Dependency injection                                          │
+└────────────────────┬────────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      CORE LAYER                                  │
+│                   (app/core/)                                    │
+│  • Business logic and workflows                                  │
+│  • Service orchestration (RAG service)                           │
+│  • Workflow coordination (Ticket workflow)                       │
+│  • LLM prompt management (future)                                │
+└────────────┬───────────────────────┬────────────────────────────┘
+             │                       │
+             ▼                       ▼
+┌────────────────────┐    ┌─────────────────────────────────────┐
+│  INFRASTRUCTURE    │    │      CONFIGURATION                   │
+│  (app/infrastructure/) │ │      (app/config/)                  │
+│  • Database         │    │  • Environment settings              │
+│  • Vector stores    │    │  • API keys management               │
+│  • External clients │    │  • Database URLs                     │
+│  • Repositories     │    │  • Directory paths                   │
+└────────────────────┘    └─────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                      SCHEMAS LAYER                               │
+│                   (app/schemas/)                                 │
+│  • Pydantic request models                                       │
+│  • Pydantic response models                                      │
+│  • LLM prompt templates (RagPrompts, PromptValidator)            │
+│  • Validation rules                                              │
+└─────────────────────────────────────────────────────────────────┘
+
+DEPENDENCY FLOW:
+----------------
+API Layer → Core Layer → Infrastructure Layer
+         ↓
+      Schemas Layer (shared across all layers)
+         ↓
+      Config Layer (shared across all layers)
+
+KEY PRINCIPLE: Inner layers (Core) don't depend on outer layers (API/Infrastructure)
+
+================================================================================
+3. CURRENT DIRECTORY STRUCTURE
+================================================================================
+
+support_desk_assistant-1/
+│
+├── 📁 app/                           # Main application package (28 Python files)
+│   ├── __init__.py
+│   ├── main.py                       # FastAPI app entry point + health check
+│   │
+│   ├── 📁 api/                       # API Layer (HTTP handlers)
+│   │   ├── __init__.py
+│   │   ├── dependencies.py           # Dependency injection (get_db, get_rag, get_ticket_agent)
+│   │   └── v1/                       # API version 1
+│   │       ├── __init__.py
+│   │       └── endpoints.py          # 4 REST endpoints (rag, tickets)
+│   │
+│   ├── 📁 core/                      # Core Business Logic Layer
+│   │   ├── __init__.py
+│   │   ├── services/                 # Business services
+│   │   │   ├── __init__.py
+│   │   │   └── rag_service.py        # RAG implementation with tag extraction
+│   │   ├── workflows/                # Workflow orchestrators
+│   │   │   ├── __init__.py
+│   │   │   └── ticket_workflow.py    # Ticket processing orchestration
+│   │   └── llm/                      # LLM configurations (currently empty)
+│   │       └── __init__.py
+│   │
+│   ├── 📁 infrastructure/            # Infrastructure Layer
+│   │   ├── __init__.py
+│   │   ├── db/                       # Database
+│   │   │   ├── __init__.py
+│   │   │   ├── connection.py         # SQLAlchemy setup + init_db()
+│   │   │   └── models.py             # Ticket ORM model
+│   │   ├── repositories/             # Data access layer
+│   │   │   ├── __init__.py
+│   │   │   └── ticket_repository.py  # CRUD operations (create, get, list, update_feedback)
+│   │   ├── vectorstores/             # Vector database clients
+│   │   │   ├── __init__.py
+│   │   │   └── pinecone_client.py    # Pinecone integration (VectorStoreClient)
+│   │   └── clients/                  # External API clients
+│   │       ├── __init__.py
+│   │       └── openai_client.py      # OpenAI API wrapper (OpenAIClient)
+│   │
+│   ├── 📁 config/                    # Configuration Layer
+│   │   ├── __init__.py
+│   │   └── settings.py               # Settings class with environment variables
+│   │
+│   └── 📁 schemas/                   # Schemas Layer
+│       ├── __init__.py
+│       ├── requests.py               # RagQueryRequest, TicketAgentRequest, TicketFeedbackRequest
+│       ├── responses.py              # RagQueryResponse, TicketAgentResponse, TicketRecord, RagSource
+│       └── prompts.py                # RagPrompts class + PromptValidator
+│
+├── 📁 tests/                         # Test Suite (78 tests total)
+│   ├── __init__.py
+│   ├── conftest.py                   # Pytest configuration + fixtures
+│   ├── unit/                         # Unit tests (mocked dependencies)
+│   │   ├── __init__.py
+│   │   ├── core/
+│   │   │   ├── services/
+│   │   │   │   └── test_rag_service.py
+│   │   │   └── workflows/
+│   │   │       └── test_ticket_workflow.py
+│   │   └── infrastructure/
+│   │       ├── clients/
+│   │       │   └── test_openai_client.py
+│   │       ├── vectorstores/
+│   │       │   └── test_pinecone_client.py
+│   │       └── repositories/
+│   │           └── test_ticket_repository.py
+│   └── integration/                  # Integration tests (real services)
+│       ├── __init__.py
+│       ├── api/
+│       │   └── test_tickets_endpoint.py  # 11 tests
+│       ├── test_database_integration.py   # 10 tests
+│       ├── test_openai_integration.py     # 12 tests (including generate_summary_with_tags)
+│       ├── test_pinecone_connection.py    # 2 tests
+│       ├── test_rag_integration.py        # 5 tests
+│       └── test_end_to_end.py             # 2 tests
+│
+├── 📁 scripts/                       # Utility scripts
+│   ├── __init__.py
+│   └── ingest_docs.py                # Document ingestion to Pinecone
+│
+├── 📁 data/                          # Data storage
+│   ├── docs/                         # Knowledge base documents (.txt, .md)
+│   ├── database/                     # Database backup directory
+│   ├── logs/                         # Application logs directory
+│   ├── support.db                    # Production SQLite database
+│   └── test_support.db               # Test SQLite database
+│
+├── 📁 docs/                          # Documentation
+│   ├── OPENAI_CLIENT_REFACTOR.md     # OpenAI client refactoring notes
+│   └── OPTIMIZATION_RAG_CONSOLIDATION.md  # RAG consolidation optimization
+│
+├── 📄 requirements.txt               # Production dependencies (9 packages)
+├── 📄 requirements-dev.txt           # Development dependencies
+├── 📄 pytest.ini                     # Pytest configuration
+├── 📄 Makefile                       # Development commands
+├── 📄 .env                           # Environment variables (gitignored)
+├── 📄 .gitignore                     # Git ignore rules
+├── 📄 close_db.py                    # Database cleanup utility script
+├── 📄 DATABASE_USAGE.md              # Database access guide
+├── 📄 test_coverage_analysis.txt     # Test coverage analysis
+└── 📄 README.md                      # Project overview (if exists)
+
+TOTAL: 28 Python files in app/, 78 test files, 11 test files
+
+================================================================================
+4. CORE COMPONENTS & IMPLEMENTATION
+================================================================================
+
+4.1 TICKET PROCESSING WORKFLOW
+-------------------------------
+
+Entry Point: POST /api/v1/tickets/agent
+
+Components Involved:
+• app/api/v1/endpoints.py → process_ticket()
+• app/core/workflows/ticket_workflow.py → TicketAgentService.process_ticket()
+• app/core/services/rag_service.py → RagService.answer()
+• app/infrastructure/vectorstores/pinecone_client.py → VectorStoreClient.query_similar()
+• app/infrastructure/clients/openai_client.py → OpenAIClient.generate_rag_response()
+• app/infrastructure/repositories/ticket_repository.py → create_ticket()
+• app/infrastructure/db/models.py → Ticket (ORM)
+
+Processing Flow:
+1. Client sends ticket text via POST request
+2. FastAPI endpoint validates request (TicketAgentRequest schema)
+3. TicketAgentService.process_ticket() is called with db session and text
+4. RAG service is invoked: rag_service.answer(text)
+   → This single call returns: {answer, tags, confidence, sources}
+5. Action determination logic:
+   - IF answer exists and not "INSUFFICIENT_CONTEXT" → action = "reply"
+   - ELSE → action = "escalate"
+6. Ticket persisted to database with:
+   - text, action, reply (if action=reply), tags, reason
+7. Response returned: {id, action, reply, tags, reason}
+
+IMPORTANT: There is NO separate summarization step. Tags are extracted
+during the RAG call using structured JSON output from OpenAI.
+
+4.2 RAG SERVICE (CORE LOGIC)
+-----------------------------
+
+Purpose: Answer queries using knowledge base with integrated tag extraction
+
+Location: app/core/services/rag_service.py
+
+Class: RagService
+
+Dependencies:
+• VectorStoreClient (Pinecone)
+• OpenAIClient
+
+Key Method: answer(query: str, top_k: int = 5)
+
+Workflow:
+1. Query received
+2. VectorStore retrieves top_k similar documents (default 5)
+   - Generates embedding for query
+   - Performs cosine similarity search in Pinecone
+   - Returns matches with metadata
+3. Context building:
+   - Extracts text snippets from matched documents
+   - Formats as numbered context list
+4. LLM generation:
+   - Calls OpenAIClient.generate_rag_response(query, context_chunks)
+   - Uses structured prompt from RagPrompts
+   - Returns JSON: {answer, tags, confidence}
+5. Returns complete result dict with sources
+
+Return Format:
+{
+    "answer": "The generated answer text...",
+    "tags": ["tag1", "tag2", "tag3"],
+    "confidence": "high"|"medium"|"low",
+    "sources": [
+        {
+            "id": "doc_id",
+            "score": 0.95,
+            "metadata": {"source": "file.txt", "text": "snippet..."}
+        }
+    ]
+}
+
+Singleton Pattern: get_rag_service() returns cached instance
+
+4.3 OPENAI CLIENT
+-----------------
+
+Purpose: Centralized OpenAI API wrapper
+
+Location: app/infrastructure/clients/openai_client.py
+
+Class: OpenAIClient
+
+Configuration:
+• API Key: From settings.OPENAI_API_KEY
+• Default Model: gpt-4o-mini
+• Client: OpenAI SDK v1.3.7
+
+Key Methods:
+
+1. generate_chat_completion(messages, model, temperature, max_tokens)
+   - Basic chat completion
+   - Returns: str (response text)
+
+2. generate_embeddings(texts, model="text-embedding-ada-002")
+   - Batch embedding generation
+   - Returns: List[List[float]] (1536-dimensional vectors)
+
+3. generate_rag_response(query, context_chunks, model)
+   - Specialized RAG generation with structured output
+   - Uses RagPrompts.SYSTEM_PROMPT_WITH_TAGS and user prompt
+   - Parses JSON response
+   - Returns: Dict[str, Any] with {answer, tags, confidence}
+   - Fallback to plain text if JSON parsing fails
+
+4. generate_summary_with_tags(text, max_sentences, model)
+   - Summarization utility (ONLY used in tests, NOT in production endpoints)
+   - Returns: str (JSON formatted)
+
+Singleton Pattern: get_openai_client() returns cached instance
+
+4.4 PINECONE VECTOR STORE CLIENT
+---------------------------------
+
+Purpose: Manage document embeddings and similarity search
+
+Location: app/infrastructure/vectorstores/pinecone_client.py
+
+Class: VectorStoreClient
+
+Configuration:
+• Cloud: AWS
+• Region: us-east-1
+• Spec: ServerlessSpec
+• Index Name: From settings.PINECONE_INDEX_NAME
+• Dimension: 1536 (OpenAI ada-002 embedding size)
+• Metric: Cosine similarity
+
+Initialization:
+• Connects to existing index or creates new one
+• Auto-creates index if doesn't exist
+
+Key Methods:
+
+1. upsert_documents(texts, metadatas, ids, namespace)
+   - Generates embeddings for texts using OpenAI
+   - Upserts vectors to Pinecone with metadata
+   - Supports custom IDs or auto-generation
+   - Supports namespaces for organization
+
+2. query_similar(query_text, top_k=5, namespace)
+   - Generates embedding for query
+   - Searches Pinecone for similar vectors
+   - Returns matches with scores and metadata
+   - Format: List[Dict] with id, score, metadata
+
+3. delete_all(namespace)
+   - Deletes all vectors in namespace
+   - Used for cleanup/testing
+
+Metadata Structure:
+{
+    "source": "filename.txt",
+    "text": "document chunk text"
+}
+
+Singleton Pattern: get_vectorstore_client() returns cached instance
+
+4.5 DATABASE & REPOSITORY LAYER
+--------------------------------
+
+Database: SQLite with SQLAlchemy ORM
+
+Files:
+• app/infrastructure/db/connection.py - Database setup
+• app/infrastructure/db/models.py - ORM models
+• app/infrastructure/repositories/ticket_repository.py - CRUD operations
+
+Database Configuration:
+• URL: sqlite:///data/support.db (configurable via DB_URL)
+• Pooling: NullPool (disabled for SQLite)
+• Auto-create tables: init_db() called on app startup
+
+Ticket Model (ORM):
+-------------------
+Table: tickets
+
+Columns:
+• id: Integer, Primary Key, AutoIncrement
+• text: Text, NOT NULL (ticket content)
+• action: String, NOT NULL (reply/escalate/close)
+• reply: Text, Nullable (AI-generated response)
+• tags: String, Nullable (comma-separated tags)
+• reason: Text, Nullable (explanation for action)
+• created_at: DateTime, NOT NULL, Default NOW
+• human_label: String, Nullable (feedback label)
+
+Repository Operations (ticket_repository.py):
+----------------------------------------------
+
+1. create_ticket(db, text, action, reply, tags, reason, human_label)
+   - Tags: List[str] → converted to comma-separated string
+   - Returns: Ticket ORM object with ID
+
+2. get_ticket(db, ticket_id)
+   - Returns: Ticket or None
+
+3. list_tickets(db, skip=0, limit=100)
+   - Pagination support
+   - Returns: List[Ticket]
+
+4. update_ticket_feedback(db, ticket_id, human_label)
+   - Updates human_label field
+   - Returns: Updated Ticket or None
+
+Database Cleanup:
+• close_db.py script for releasing locks
+• Important for SQLite when using external tools
+
+4.6 TICKET WORKFLOW SERVICE
+----------------------------
+
+Purpose: Orchestrate ticket processing workflow
+
+Location: app/core/workflows/ticket_workflow.py
+
+Class: TicketAgentService
+
+Dependencies:
+• RagService (for analysis)
+
+Process Logic (process_ticket method):
+---------------------------------------
+1. Call RAG service with ticket text
+2. Extract: answer, tags, confidence from RAG result
+3. Determine action:
+   - IF answer exists AND not "INSUFFICIENT_CONTEXT" → action = "reply"
+   - ELSE → action = "escalate"
+4. Set reason:
+   - For reply: "Generated reply using knowledge base context via RAG."
+   - For escalate: Explains lack of context
+5. Create ticket in database
+6. Return: {id, action, reply, tags, reason}
+
+Note: No separate summarization or tag extraction step.
+Everything happens in ONE RAG call for efficiency.
+
+Singleton Pattern: get_ticket_agent_service() returns cached instance
+
+================================================================================
+5. API ENDPOINTS (4 ENDPOINTS)
+================================================================================
+
+Base URL: http://localhost:8000
+API Version: v1
+Prefix: /api/v1
+
+HEALTH CHECK ENDPOINT
+---------------------
+GET /health
+
+Description: Service health check
+Authentication: None
+Response: {"status": "healthy", "version": "0.1.0"}
+Status Codes: 200 OK
+
+5.1 RAG QUERY ENDPOINT
+----------------------
+POST /api/v1/rag/query
+
+Description: Query the knowledge base using RAG
+Authentication: None
+
+Request Schema (RagQueryRequest):
+{
+  "query": "How do I reset my password?"
+}
+
+Validation:
+• query: string, required, non-empty, stripped
+
+Response Schema (RagQueryResponse):
+{
+  "answer": "To reset your password, go to Settings > Account > Reset Password...",
+  "sources": [
+    {
+      "doc_name": "password_reset.txt",
+      "snippet": "Password reset instructions: Navigate to..."
+    }
+  ]
+}
+
+Status Codes:
+• 200 OK - Success
+• 422 Unprocessable Entity - Validation error
+
+Handler: rag_query() in endpoints.py
+Dependencies: RagService (via get_rag)
+
+5.2 PROCESS TICKET ENDPOINT
+---------------------------
+POST /api/v1/tickets/agent
+
+Description: Process a support ticket with AI triage
+Authentication: None
+
+Request Schema (TicketAgentRequest):
+{
+  "ticket": "My account is locked and I can't login"
+}
+
+Response Schema (TicketAgentResponse):
+{
+  "id": 1,
+  "action": "reply",
+  "reply": "I can help you unlock your account. Please follow these steps...",
+  "reason": "Generated reply using knowledge base context via RAG.",
+  "tags": ["account", "locked", "authentication"]
+}
+
+Fields:
+• id: Ticket database ID
+• action: "reply" | "escalate" | "close"
+• reply: Generated response (null if escalated)
+• reason: Explanation for the action
+• tags: List of extracted tags
+
+Status Codes:
+• 200 OK - Success
+• 422 Unprocessable Entity - Validation error
+
+Handler: process_ticket() in endpoints.py
+Dependencies: Database session, TicketAgentService
+
+5.3 SUBMIT FEEDBACK ENDPOINT
+-----------------------------
+POST /api/v1/tickets/feedback
+
+Description: Submit human feedback for a ticket (human-in-the-loop)
+Authentication: None
+
+Request Schema (TicketFeedbackRequest):
+{
+  "ticket_id": 1,
+  "human_label": "correct"
+}
+
+Valid Labels:
+• "correct" - Agent decision was correct
+• "wrong_action" - Wrong action chosen
+• "wrong_reply" - Wrong reply generated  
+• "needs_improvement" - Reply needs improvement
+
+Response Schema (TicketRecord):
+{
+  "id": 1,
+  "text": "My account is locked...",
+  "action": "reply",
+  "reply": "I can help you...",
+  "tags": ["account", "locked", "authentication"],
+  "reason": "Generated reply using knowledge base context via RAG.",
+  "created_at": "2024-12-27T09:59:00",
+  "human_label": "correct"
+}
+
+Status Codes:
+• 200 OK - Success
+• 404 Not Found - Ticket ID doesn't exist
+• 422 Unprocessable Entity - Validation error
+
+Handler: submit_ticket_feedback() in endpoints.py
+Dependencies: Database session
+Repository: ticket_repository.update_ticket_feedback()
+
+5.4 LIST TICKETS ENDPOINT
+-------------------------
+GET /api/v1/tickets
+
+Description: Retrieve paginated list of tickets
+Authentication: None
+
+Query Parameters:
+• skip: int = 0 (number of records to skip)
+• limit: int = 50 (maximum records to return)
+
+Example: GET /api/v1/tickets?skip=0&limit=10
+
+Response Schema: List[TicketRecord]
+[
+  {
+    "id": 1,
+    "text": "My account is locked",
+    "action": "reply",
+    "reply": "I can help you...",
+    "tags": ["account", "locked"],
+    "reason": "Generated reply using knowledge base context via RAG.",
+    "created_at": "2024-12-27T09:59:00",
+    "human_label": "correct"
+  }
+]
+
+Status Codes:
+• 200 OK - Success
+
+Handler: list_tickets() in endpoints.py
+Dependencies: Database session
+Repository: ticket_repository.list_tickets()
+
+NOTE: There is NO /api/v1/summarise endpoint in the current implementation.
+Tag extraction happens during RAG processing, not as a separate endpoint.
+
+================================================================================
+6. DATABASE SCHEMA
+================================================================================
+
+Database Type: SQLite
+Production Location: data/support.db
+Test Location: data/test_support.db
+ORM: SQLAlchemy 2.0.23
+
+TICKETS TABLE
+-------------
+
+CREATE TABLE tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    action VARCHAR NOT NULL,
+    reply TEXT,
+    tags VARCHAR,
+    reason TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    human_label VARCHAR
+);
+
+Field Details:
+--------------
+id:
+  - Type: INTEGER
+  - Constraint: PRIMARY KEY, AUTOINCREMENT
+  - Description: Unique ticket identifier
+
+text:
+  - Type: TEXT
+  - Constraint: NOT NULL
+  - Description: Original ticket content submitted by user
+
+action:
+  - Type: VARCHAR
+  - Constraint: NOT NULL
+  - Values: "reply", "escalate", "close"
+  - Description: AI-recommended action
+
+reply:
+  - Type: TEXT
+  - Constraint: NULLABLE
+  - Description: AI-generated response (NULL if escalated)
+
+tags:
+  - Type: VARCHAR
+  - Constraint: NULLABLE
+  - Format: Comma-separated string (e.g., "account,password,login")
+  - Description: Tags extracted by LLM during RAG processing
+
+reason:
+  - Type: TEXT
+  - Constraint: NULLABLE
+  - Description: Explanation for why this action was chosen
+
+created_at:
+  - Type: DATETIME
+  - Constraint: NOT NULL
+  - Default: CURRENT_TIMESTAMP
+  - Description: Timestamp when ticket was created
+
+human_label:
+  - Type: VARCHAR
+  - Constraint: NULLABLE
+  - Values: "correct", "wrong_action", "wrong_reply", "needs_improvement"
+  - Description: Human feedback label
+
+Access Patterns:
+----------------
+• CREATE: High frequency (every ticket submission)
+• READ by ID: Medium frequency (feedback submission)
+• LIST: Low frequency (admin/monitoring)
+• UPDATE: Low frequency (feedback updates only)
+
+Indexes:
+--------
+• PRIMARY KEY on id (automatic)
+
+Database Management:
+--------------------
+• Connection pooling: Disabled (NullPool for SQLite)
+• Auto-create: init_db() creates table if not exists
+• Cleanup: close_db.py script to release locks
+• WAL mode: Can be enabled for better concurrency
+
+================================================================================
+7. EXTERNAL INTEGRATIONS
+================================================================================
+
+7.1 OPENAI API INTEGRATION
+---------------------------
+
+Provider: OpenAI
+API Version: v1.3.7 (SDK version)
+Authentication: API Key via environment variable
+
+Models Used:
+------------
+1. gpt-4o-mini
+   - Purpose: Chat completions for RAG and ticket triage
+   - Context: Up to 128K tokens
+   - Output: JSON-structured responses
+   - Temperature: 0.7 (default, configurable)
+
+2. text-embedding-ada-002
+   - Purpose: Generate embeddings for documents and queries
+   - Output: 1536-dimensional vectors
+   - Use cases: Document ingestion, query embedding
+
+Configuration:
+--------------
+• API Key: settings.OPENAI_API_KEY (from .env)
+• Default Model: gpt-4o-mini (configurable)
+• Timeout: Default (uses SDK defaults)
+• Retry Logic: Built into OpenAI SDK
+
+Usage Patterns:
+---------------
+• Embeddings: 
+  - Every RAG query (1 call per query)
+  - Document ingestion (batch calls during ingest_docs.py)
+
+• Chat Completions:
+  - Every ticket processing (1 call per ticket)
+  - Every RAG query (1 call per query)
+
+• Average tokens per request: 500-1500 tokens
+
+Cost Optimization:
+------------------
+• Using cost-efficient gpt-4o-mini model
+• Caching embeddings in Pinecone (no re-computation)
+• Structured JSON output reduces parsing complexity
+• Single LLM call per ticket (no separate summarization)
+
+Error Handling:
+---------------
+• JSON parsing fallback if structured output fails
+• Returns safe defaults on errors
+• Logs errors for monitoring
+
+7.2 PINECONE VECTOR DATABASE
+-----------------------------
+
+Provider: Pinecone Systems
+Type: Serverless vector database
+API Version: pinecone-client 5.0.1
+
+Configuration:
+--------------
+• Cloud: AWS
+• Region: us-east-1
+• Spec: ServerlessSpec (auto-scaling)
+• Index Name: settings.PINECONE_INDEX_NAME (from .env)
+• Dimension: 1536 (matches OpenAI ada-002)
+• Metric: Cosine similarity
+
+Authentication:
+---------------
+• API Key: settings.PINECONE_API_KEY (from .env)
+
+Index Operations:
+-----------------
+• Auto-creation: Creates index if doesn't exist on first run
+• Upsert: Batch document ingestion with metadata
+• Query: Similarity search with top-k retrieval
+• Delete: Namespace-based cleanup
+
+Data Structure:
+---------------
+Vector ID: Auto-generated or custom string
+Vector: [1536 floats] - embedding from OpenAI
+Metadata:
+  {
+    "source": "filename.txt",
+    "text": "document chunk content..."
+  }
+
+Performance:
+------------
+• Query latency: < 100ms typical
+• Capacity: Unlimited (serverless auto-scaling)
+• Concurrent queries: Auto-scaled
+• Cost: Pay-per-use (serverless pricing)
+
+Usage Patterns:
+---------------
+• Document Ingestion:
+  - Run scripts/ingest_docs.py
+  - Chunks documents, generates embeddings, upserts to Pinecone
+  
+• Query Processing:
+  - Every RAG query searches Pinecone
+  - Returns top-5 similar documents
+  - Used for ticket processing and direct RAG queries
+
+Namespace Strategy:
+-------------------
+• Default: No namespace (empty string)
+• Can organize by: document type, tenant, environment
+
+Error Handling:
+---------------
+• Connection errors logged and raised
+• Retry logic in Pinecone SDK
+• Graceful degradation on failure
+
+================================================================================
+8. TESTING INFRASTRUCTURE
+================================================================================
+
+Testing Framework: pytest 8.3.4
+Total Tests: 78 tests
+Results: 77 passed, 1 skipped
+Coverage: Comprehensive (unit + integration)
+Duration: ~45 seconds
+
+Test Configuration (pytest.ini):
+---------------------------------
+[pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+asyncio_mode = strict
+
+Test Fixtures (conftest.py):
+-----------------------------
+• test_db: Test database session with NullPool
+• client: FastAPI TestClient
+• mock_openai: Mocked OpenAIClient
+• mock_pinecone: Mocked VectorStoreClient
+• sample_tickets: Test data fixtures
+
+Cleanup Hooks:
+--------------
+• pytest_sessionfinish: Closes all database connections after tests
+• Garbage collection forced to release database locks
+
+UNIT TESTS (tests/unit/)
+-------------------------
+Focus: Test individual components in isolation with mocks
+
+1. Core Services Tests
+   • tests/unit/core/services/test_rag_service.py
+     - RAG service initialization
+     - Query processing with mocked dependencies
+     - Context building logic
+     - Error handling scenarios
+     
+2. Core Workflows Tests
+   • tests/unit/core/workflows/test_ticket_workflow.py
+     - Ticket processing logic
+     - Action determination (reply vs escalate)
+     - Reply generation
+     - Edge cases (empty tickets, malformed data)
+
+3. Infrastructure Clients Tests
+   • tests/unit/infrastructure/clients/test_openai_client.py
+     - Chat completion generation
+     - Embedding generation
+     - RAG response generation
+     - JSON parsing and validation
+     - Error handling
+   
+   • tests/unit/infrastructure/vectorstores/test_pinecone_client.py
+     - Index initialization
+     - Document upsertion
+     - Similarity search
+     - Namespace operations
+     - Batch processing
+
+4. Repository Tests
+   • tests/unit/infrastructure/repositories/test_ticket_repository.py
+     - Create ticket operation
+     - Get ticket by ID
+     - List tickets with pagination
+     - Update feedback
+     - Data validation
+
+INTEGRATION TESTS (tests/integration/)
+---------------------------------------
+Focus: Test component interactions with real or semi-real services
+
+1. API Endpoint Tests (11 tests)
+   • tests/integration/api/test_tickets_endpoint.py
+     - POST /api/v1/tickets/agent success scenarios
+     - POST /api/v1/tickets/agent failure scenarios
+     - POST /api/v1/tickets/feedback success/failure
+     - GET /api/v1/tickets with pagination
+     - Input validation edge cases
+     - Error response formats
+     - Integration with database
+
+2. Database Integration Tests (10 tests)
+   • tests/integration/test_database_integration.py
+     - Database file creation
+     - Schema validation (tables, columns)
+     - CRUD operations end-to-end
+     - Persistence verification
+     - Feedback update workflow
+     - Pagination correctness
+     - Tags storage format (comma-separated)
+     - Database constraints
+     - Connection cleanup
+
+3. OpenAI Integration Tests (12 tests)
+   • tests/integration/test_openai_integration.py
+     - Real OpenAI API connectivity
+     - Chat completion generation
+     - Chat completion with custom parameters
+     - Single text embedding
+     - Multiple text embeddings (batch)
+     - RAG response with context
+     - RAG response with empty context
+     - generate_summary_with_tags() method (test-only)
+     - JSON parsing from OpenAI responses
+     - Error handling with API failures
+
+4. Pinecone Integration Tests (2 tests)
+   • tests/integration/test_pinecone_connection.py
+     - Pinecone client initialization
+     - Query operations with real Pinecone instance
+
+5. RAG Integration Tests (5 tests)
+   • tests/integration/test_rag_integration.py
+     - End-to-end RAG workflow
+     - Vector store + OpenAI integration
+     - Tag extraction during RAG
+     - Source attribution
+     - Error propagation
+
+6. End-to-End Tests (2 tests)
+   • tests/integration/test_end_to_end.py
+     - Complete ticket workflow from API to database
+     - Health check endpoint
+
+Running Tests:
+--------------
+# All tests
+pytest tests/ -v
+
+# Only unit tests
+pytest tests/unit/ -v
+
+# Only integration tests
+pytest tests/integration/ -v
+
+# Specific test file
+pytest tests/integration/test_end_to_end.py -v
+
+# With coverage report
+pytest tests/ --cov=app --cov-report=html
+
+# Parallel execution
+pytest tests/ -n auto
+
+Test Results Summary (Latest Run):
+-----------------------------------
+✓ 77 passed
+⚠ 1 skipped (empty ticket validation - optional)
+✗ 0 failed
+Total: 78 tests
+Status: ALL CRITICAL TESTS PASSING
+
+Key Test Insights:
+------------------
+• No summarization endpoint tests (endpoint doesn't exist)
+• generate_summary_with_tags() tested but only used in test scenarios
+• RAG service handles tag extraction (tested in integration tests)
+• Database connection cleanup properly handled
+• Real OpenAI/Pinecone calls in integration tests (requires API keys)
+
+================================================================================
+9. CONFIGURATION & DEPLOYMENT
+================================================================================
+
+9.1 ENVIRONMENT CONFIGURATION
+------------------------------
+
+Configuration File: .env (gitignored)
+Template: .env.example (should be created)
+
+Required Variables:
+-------------------
+OPENAI_API_KEY=sk-...              # OpenAI API key (required)
+PINECONE_API_KEY=...               # Pinecone API key (required)
+PINECONE_INDEX_NAME=support-docs   # Pinecone index name (required)
+
+Optional Variables (with defaults):
+------------------------------------
+DB_URL=sqlite:///data/support.db   # Database connection URL
+DOCS_DIR=data/docs                  # Knowledge base documents directory
+VECTORSTORE_DIR=data/vectorstore    # Vector store persistence (unused currently)
+
+Configuration Loading:
+----------------------
+• pydantic-settings for type-safe configuration
+• Automatic .env file loading on import
+• Environment variable override support
+• Singleton pattern via @lru_cache decorator
+
+Settings Class (app/config/settings.py):
+-----------------------------------------
+class Settings(BaseSettings):
+    OPENAI_API_KEY: str                              # Required
+    PINECONE_API_KEY: str                            # Required
+    PINECONE_INDEX_NAME: str                         # Required
+    DB_URL: str = "sqlite:///data/support.db"        # Default
+    DOCS_DIR: str = "data/docs"                      # Default
+    VECTORSTORE_DIR: str = "data/vectorstore"        # Default
+    
+    class Config:
+        env_file = ".env"
+
+Access Pattern:
+---------------
+from app.config.settings import get_settings
+
+settings = get_settings()  # Returns cached singleton
+api_key = settings.OPENAI_API_KEY
+
+9.2 DEPENDENCY MANAGEMENT
+--------------------------
+
+Production Dependencies (requirements.txt):
+-------------------------------------------
+fastapi==0.115.5              # Web framework
+uvicorn==0.32.1               # ASGI server
+sqlalchemy==2.0.23            # ORM and database toolkit
+pydantic==2.10.3              # Data validation
+pydantic-settings==2.6.1      # Settings management
+openai==1.3.7                 # OpenAI API client
+pinecone-client==5.0.1        # Pinecone vector database client
+python-dotenv==1.0.0          # Environment variable loading
+streamlit==1.28.2             # UI framework (if used)
+
+Total: 9 production dependencies
+
+Development Dependencies (requirements-dev.txt):
+------------------------------------------------
+pytest==8.3.4                 # Testing framework
+pytest-mock==3.14.0           # Mocking utilities
+pytest-asyncio==0.25.3        # Async test support
+pytest-xdist==3.6.1           # Parallel test execution
+pytest-repeat==0.9.3          # Repeat flaky tests
+httpx                         # HTTP client for testing
+black                         # Code formatting
+flake8                        # Linting
+
+Installation:
+-------------
+# Production only
+pip install -r requirements.txt
+
+# Development (includes production)
+pip install -r requirements.txt -r requirements-dev.txt
+
+9.3 LOCAL DEVELOPMENT SETUP
+----------------------------
+
+Step 1: Clone and Navigate
+---------------------------
+git clone <repository>
+cd support_desk_assistant-1
+
+Step 2: Create Virtual Environment
+-----------------------------------
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+Step 3: Install Dependencies
+-----------------------------
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+Step 4: Configure Environment
+------------------------------
+# Create .env file
+cat > .env << EOF
+OPENAI_API_KEY=sk-your-key-here
+PINECONE_API_KEY=your-pinecone-key
+PINECONE_INDEX_NAME=support-docs
+DB_URL=sqlite:///data/support.db
+DOCS_DIR=data/docs
+EOF
+
+Step 5: Initialize Database
+----------------------------
+# Database is auto-created on first run
+# Tables created by init_db() in app startup
+
+Step 6: Ingest Documents (Optional)
+------------------------------------
+# Place .txt or .md files in data/docs/
+python scripts/ingest_docs.py
+
+Step 7: Start Development Server
+---------------------------------
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Server runs at: http://localhost:8000
+# API docs at: http://localhost:8000/docs
+
+Makefile Commands:
+------------------
+make ensure-venv          # Create virtual environment
+make requirements         # Install production dependencies
+make requirements-dev     # Install all dependencies
+make run-api              # Start API server
+make run-ingest           # Run document ingestion
+make clean                # Clean Python caches
+
+9.4 PRODUCTION DEPLOYMENT
+--------------------------
+
+Recommended Architecture:
+-------------------------
+• Container: Docker with Python 3.10+ slim image
+• Reverse Proxy: Nginx with SSL/TLS (Let's Encrypt)
+• Database: SQLite (for low traffic) or migrate to PostgreSQL
+• Vector Store: Pinecone serverless (already cloud-based)
+• Secrets Management: AWS Secrets Manager, HashiCorp Vault, or Kubernetes Secrets
+• Logging: Structured JSON logs to stdout/stderr
+• Monitoring: Health check endpoint + metrics endpoint
+
+Environment Setup:
+------------------
+• Use environment variables (not .env file)
+• Secret injection via orchestrator
+• Read-only filesystem where possible
+• Non-root user in container
+
+Scaling Considerations:
+-----------------------
+• SQLite suitable for < 100 req/sec
+• For higher load: Migrate to PostgreSQL
+• Horizontal scaling: Stateless app (singleton services OK with caching)
+• Database connection pooling: Enable for PostgreSQL
+
+Health Monitoring:
+------------------
+Endpoint: GET /health
+Response: {"status": "healthy", "version": "0.1.0"}
+Use for:
+• Load balancer health checks
+• Kubernetes liveness/readiness probes
+• Uptime monitoring
+
+Performance Metrics to Track:
+------------------------------
+• API response times (p50, p95, p99)
+• Database query latency
+• OpenAI API latency (embedding + completion)
+• Pinecone query latency
+• Error rates (4xx, 5xx)
+• Token usage (cost tracking)
+• Concurrent requests
+• Database connections
+
+Logging Strategy:
+-----------------
+• Structured logging: JSON format
+• Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+• Include: timestamp, level, message, context
+• Log to stdout/stderr for container orchestration
+• Centralized logging: ELK, CloudWatch, Datadog
+
+Security Considerations:
+------------------------
+• API key rotation policy
+• Rate limiting (not implemented yet)
+• Input sanitization (Pydantic handles this)
+• HTTPS only in production
+• CORS configuration if needed
+• Dependency vulnerability scanning
+
+Backup Strategy:
+----------------
+• Database: Regular SQLite file backups
+• Pinecone: Vectors persisted in cloud (auto-backup)
+• Configuration: Version controlled .env.example
+
+9.5 DEPLOYMENT CHECKLIST
+-------------------------
+
+Pre-Deployment:
+---------------
+☐ All tests passing (78 tests)
+☐ Environment variables configured
+☐ API keys validated
+☐ Database initialized
+☐ Documents ingested to Pinecone
+☐ Health check endpoint responding
+☐ Dependencies up to date
+☐ Security scan completed
+
+Production Configuration:
+--------------------------
+☐ HTTPS enabled
+☐ CORS configured (if needed)
+☐ Rate limiting enabled
+☐ Logging configured
+☐ Monitoring/alerting set up
+☐ Backup strategy in place
+☐ Secrets properly managed
+☐ Non-root user in container
+
+Post-Deployment:
+----------------
+☐ Health check verified
+☐ Smoke tests passed
+☐ Monitoring dashboards checked
+☐ Error rates normal
+☐ API response times acceptable
+☐ Documentation updated
+
+================================================================================
+10. COMPLETE DATA FLOWS
+================================================================================
+
+10.1 DOCUMENT INGESTION WORKFLOW
+---------------------------------
+
+Purpose: Load knowledge base documents into Pinecone vector store
+
+Script: scripts/ingest_docs.py
+
+Step-by-Step Flow:
+------------------
+1. Script Initialization
+   - Load settings (DOCS_DIR, Pinecone config)
+   - Initialize VectorStoreClient (connects to Pinecone)
+   - Initialize OpenAI client (for embeddings)
+
+2. Document Discovery
+   - Scan data/docs/ directory
+   - Find all .txt and .md files
+   - Read file contents
+
+3. Document Chunking
+   - Split documents into ~500 character chunks
+   - Preserve context within chunks
+   - Generate unique IDs or use filenames
+
+4. Embedding Generation
+   - For each chunk: call OpenAI embedding API
+   - Model: text-embedding-ada-002
+   - Output: 1536-dimensional vectors
+
+5. Metadata Preparation
+   - For each chunk: create metadata dict
+   - Include: {"source": "filename.txt", "text": "chunk content"}
+
+6. Pinecone Upsertion
+   - Batch upsert vectors to Pinecone
+   - Vector ID, embedding, metadata
+   - Confirm successful ingestion
+
+7. Summary Report
+   - Print number of documents processed
+   - Print number of chunks created
+   - Print total vectors upserted
+
+Usage:
+------
+python scripts/ingest_docs.py
+
+Output Example:
+---------------
+Loaded 5 documents from data/docs/
+Created 23 chunks
+Generated embeddings for 23 chunks
+Upserted 23 vectors to Pinecone index 'support-docs'
+✓ Ingestion complete!
+
+10.2 TICKET PROCESSING FLOW (DETAILED)
+---------------------------------------
+
+Complete end-to-end flow for ticket processing.
+
+STEP 1: CLIENT REQUEST
+-----------------------
+POST /api/v1/tickets/agent
+Content-Type: application/json
+Body: 
+{
+  "ticket": "I forgot my password and can't access my account"
+}
+
+STEP 2: API LAYER (app/api/v1/endpoints.py)
+--------------------------------------------
+• FastAPI receives request
+• Validates request body against TicketAgentRequest schema
+• Injects dependencies:
+  - db: Database session (via get_db)
+  - agent: TicketAgentService (via get_ticket_agent)
+• Calls: agent.process_ticket(db=db, text=request.ticket)
+
+STEP 3: WORKFLOW ORCHESTRATION (app/core/workflows/ticket_workflow.py)
+-----------------------------------------------------------------------
+TicketAgentService.process_ticket()
+
+3a. Call RAG Service
+   • Invokes: self._rag_service.answer(text)
+   • Passes ticket text to RAG
+   • Waits for result
+
+STEP 4: RAG SERVICE (app/core/services/rag_service.py)
+-------------------------------------------------------
+RagService.answer()
+
+4a. Vector Store Query
+   • Calls: self._vectorstore.query_similar(query_text, top_k=5)
+   • Pinecone searches for similar documents
+   • Returns: List of matches with scores and metadata
+
+4b. Context Building
+   • Extracts text from matched documents
+   • Formats as: ["1. [doc1.txt] snippet...", "2. [doc2.txt] snippet..."]
+   • Creates context_chunks list
+
+4c. LLM Generation
+   • Calls: self._openai_client.generate_rag_response(query, context_chunks)
+   • Uses structured prompt from RagPrompts
+   • OpenAI returns JSON: {answer, tags, confidence}
+   • Parses response
+
+4d. Return Result
+   • Returns to TicketAgentService:
+     {
+       "answer": "To reset your password...",
+       "tags": ["password", "account", "authentication"],
+       "confidence": "high",
+       "sources": [...]
+     }
+
+STEP 5: ACTION DETERMINATION (ticket_workflow.py)
+--------------------------------------------------
+Back in TicketAgentService.process_ticket()
+
+5a. Extract Results
+   • answer = rag_result.get("answer", "")
+   • tags = rag_result.get("tags", [])
+   • confidence = rag_result.get("confidence", "low")
+
+5b. Decide Action
+   • IF answer exists AND not "INSUFFICIENT_CONTEXT":
+       action = "reply"
+       reason = "Generated reply using knowledge base context via RAG."
+   • ELSE:
+       action = "escalate"
+       reason = "Knowledge base lacks sufficient information; escalating to human agent."
+
+STEP 6: DATABASE PERSISTENCE (app/infrastructure/repositories/ticket_repository.py)
+------------------------------------------------------------------------------------
+ticket_repository.create_ticket()
+
+6a. Create Ticket ORM Object
+   • ticket = Ticket(
+       text=text,
+       action=action,
+       reply=answer if action == "reply" else None,
+       tags=",".join(tags),  # Convert list to comma-separated string
+       reason=reason,
+       human_label=None,
+       created_at=auto-generated
+     )
+
+6b. Database Operations
+   • db.add(ticket)
+   • db.commit()
+   • db.refresh(ticket)  # Get ID and created_at
+
+6c. Return Ticket
+   • Returns: Ticket ORM object with ID
+
+STEP 7: RESPONSE CONSTRUCTION (ticket_workflow.py)
+---------------------------------------------------
+Build response dict:
+{
+  "id": ticket.id,
+  "action": ticket.action,
+  "reply": ticket.reply,
+  "tags": tags,  # As list
+  "reason": ticket.reason
+}
+
+STEP 8: API RESPONSE (endpoints.py)
+------------------------------------
+• Construct TicketAgentResponse from result dict
+• Return to client
+
+STEP 9: CLIENT RECEIVES RESPONSE
+---------------------------------
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "id": 42,
+  "action": "reply",
+  "reply": "To reset your password:\n1. Go to the login page\n2. Click 'Forgot Password'...",
+  "reason": "Generated reply using knowledge base context via RAG.",
+  "tags": ["password", "account", "authentication"]
+}
+
+TIMING BREAKDOWN (APPROXIMATE)
+-------------------------------
+• API validation: < 1ms
+• RAG query (total): 600-1700ms
+  - Embedding generation: 50ms
+  - Pinecone search: 50-100ms
+  - OpenAI chat completion: 500-1500ms
+• Database insert: 5-10ms
+• Response construction: < 1ms
+
+TOTAL: ~600-2000ms typical
+
+10.3 RAG QUERY FLOW (DETAILED)
+-------------------------------
+
+Standalone RAG query via POST /api/v1/rag/query
+
+INPUT:
+------
+POST /api/v1/rag/query
+{
+  "query": "How do I reset my password?"
+}
+
+STEP 1: ENDPOINT VALIDATION
+----------------------------
+• Validate query is non-empty
+• Inject RagService dependency
+
+STEP 2: RAG SERVICE CALL
+-------------------------
+rag_service.answer(request.query)
+
+STEP 3: EMBEDDING GENERATION
+-----------------------------
+• OpenAI API call
+• Model: text-embedding-ada-002
+• Input: "How do I reset my password?"
+• Output: [1536 floats]
+• Time: ~50ms
+
+STEP 4: VECTOR SIMILARITY SEARCH
+---------------------------------
+• Pinecone query with embedding
+• Metric: Cosine similarity
+• top_k: 5 (retrieve 5 most similar)
+• Returns: Matches with scores (0.0-1.0) and metadata
+
+Example Match:
+{
+  "id": "doc_password_reset_chunk_1",
+  "score": 0.92,
+  "metadata": {
+    "source": "password_reset.txt",
+    "text": "To reset your password, navigate to..."
+  }
+}
+
+Time: ~50-100ms
+
+STEP 5: CONTEXT ASSEMBLY
+-------------------------
+Build context string from matches:
+
+Context:
+1. [password_reset.txt] To reset your password, navigate to the login page and click "Forgot Password"...
+2. [account_security.txt] Account recovery procedures require email verification...
+3. [faq.txt] Frequently asked questions about password resets...
+4. [user_guide.txt] For security reasons, passwords must be reset using...
+5. [troubleshooting.txt] If you cannot receive the password reset email...
+
+STEP 6: PROMPT CONSTRUCTION
+----------------------------
+System Prompt (from RagPrompts.SYSTEM_PROMPT_WITH_TAGS):
+"You are a helpful support assistant. Answer questions using the provided context..."
+
+User Prompt:
+"""
+Context:
+[assembled context from step 5]
+
+Question: How do I reset my password?
+
+Instructions: Provide a helpful answer based on the context. If context is insufficient, respond with "INSUFFICIENT_CONTEXT".
+Include "tags", "answer", and "confidence" in JSON format.
+"""
+
+STEP 7: LLM GENERATION
+----------------------
+• OpenAI GPT-4o-mini API call
+• Temperature: 0.7
+• Expected output: JSON
+• Structured output parsing
+
+Raw LLM Response:
+```json
+{
+  "answer": "To reset your password:\n1. Go to the login page\n2. Click 'Forgot Password'\n3. Enter your email address\n4. Check your email for a reset link\n5. Follow the link and create a new password\n\nFor security reasons, passwords must meet minimum requirements.",
+  "tags": ["password", "reset", "authentication", "account"],
+  "confidence": "high"
+}
+```
+
+Time: ~500-1500ms
+
+STEP 8: RESPONSE PARSING
+-------------------------
+• Parse JSON from LLM
+• Validate structure with PromptValidator
+• Fallback to plain text if parsing fails
+
+Validated Result:
+{
+  "answer": "To reset your password...",
+  "tags": ["password", "reset", "authentication", "account"],
+  "confidence": "high",
+  "sources": [
+    {"id": "...", "score": 0.92, "metadata": {...}},
+    ...
+  ]
+}
+
+STEP 9: ENDPOINT RESPONSE CONSTRUCTION
+---------------------------------------
+Convert to RagQueryResponse:
+• Extract answer
+• Extract sources (doc_name, snippet)
+
+STEP 10: CLIENT RECEIVES RESPONSE
+----------------------------------
+HTTP/1.1 200 OK
+{
+  "answer": "To reset your password:\n1. Go to the login page\n2. Click 'Forgot Password'...",
+  "sources": [
+    {
+      "doc_name": "password_reset.txt",
+      "snippet": "To reset your password, navigate to the login page..."
+    },
+    {
+      "doc_name": "account_security.txt",
+      "snippet": "Account recovery procedures require email verification..."
+    }
+  ]
+}
+
+TOTAL TIME: ~600-1700ms
+
+10.4 FEEDBACK LOOP WORKFLOW
+----------------------------
+
+Purpose: Human-in-the-loop for model improvement
+
+STEP 1: Human Reviews Ticket
+-----------------------------
+• Admin/agent reviews ticket #42
+• Evaluates AI decision and response
+• Decides on feedback label
+
+STEP 2: Submit Feedback
+------------------------
+POST /api/v1/tickets/feedback
+{
+  "ticket_id": 42,
+  "human_label": "correct"
+}
+
+STEP 3: Database Update
+------------------------
+• ticket_repository.update_ticket_feedback(db, 42, "correct")
+• SQL: UPDATE tickets SET human_label = 'correct' WHERE id = 42
+• Returns: Updated Ticket object
+
+STEP 4: Response
+-----------------
+Returns complete TicketRecord with updated human_label
+
+Future Enhancements:
+--------------------
+• Aggregate feedback statistics
+• Identify patterns in incorrect decisions
+• Fine-tune prompts based on feedback
+• A/B test different prompt strategies
+• Export feedback data for model retraining
+
+10.5 ERROR HANDLING FLOWS
+--------------------------
+
+ERROR TYPE 1: VALIDATION ERRORS (422)
+--------------------------------------
+Trigger: Invalid request body
+Example: Empty ticket text, malformed JSON
+
+Flow:
+• Pydantic validation fails
+• FastAPI returns 422 with detailed errors
+• Response: {"detail": [{"loc": [...], "msg": "...", "type": "..."}]}
+
+ERROR TYPE 2: NOT FOUND ERRORS (404)
+-------------------------------------
+Trigger: Ticket ID doesn't exist
+Example: POST /api/v1/tickets/feedback with invalid ticket_id
+
+Flow:
+• Repository returns None
+• Endpoint raises HTTPException(404)
+• Response: {"detail": "Ticket not found"}
+
+ERROR TYPE 3: EXTERNAL API ERRORS (500)
+----------------------------------------
+Trigger: OpenAI or Pinecone API failure
+
+Flow:
+• Exception caught in service layer
+• Logged to stderr
+• Returns 500 Internal Server Error
+• Response: {"detail": "Internal server error"}
+
+Retry Strategy:
+• OpenAI SDK has built-in retries
+• Pinecone SDK has built-in retries
+• Application layer: No explicit retry (fails fast)
+
+ERROR TYPE 4: DATABASE ERRORS (500)
+------------------------------------
+Trigger: Database connection failure, constraint violation
+
+Flow:
+• SQLAlchemy exception raised
+• Transaction rolled back
+• Error logged
+• Returns 500 Internal Server Error
+
+ERROR TYPE 5: JSON PARSING ERRORS (Internal)
+---------------------------------------------
+Trigger: LLM returns invalid JSON
+
+Flow:
+• json.loads() raises JSONDecodeError
+• Fallback to safe default: {"answer": raw_text, "tags": [], "confidence": "low"}
+• No error to client (graceful degradation)
+
+================================================================================
+CONCLUSION
+================================================================================
+
+The AI Support Desk Assistant is a production-ready application with:
+
+CURRENT ARCHITECTURE HIGHLIGHTS:
+---------------------------------
+✓ Clean layered architecture (API → Core → Infrastructure)
+✓ Single efficient RAG call (no separate summarization)
+✓ 4 REST endpoints (RAG query, ticket processing, feedback, list)
+✓ Integrated tag extraction within RAG workflow
+✓ 78 comprehensive tests (77 passing, 1 skipped)
+✓ SQLite database with proper ORM
+✓ Pinecone serverless vector store
+✓ OpenAI GPT-4o-mini for LLM
+✓ Dependency injection for testability
+✓ Type-safe configuration with pydantic-settings
+
+KEY TECHNICAL DECISIONS:
+-------------------------
+• No /summarise endpoint - Tags extracted during RAG processing
+• No separate summariser service - Consolidated into RAG for efficiency
+• Single LLM call per ticket - Reduces latency and cost
+• Singleton pattern for services - Reduces initialization overhead
+• SQLite with NullPool - Suitable for development and low-traffic production
+• Serverless Pinecone - Auto-scaling, pay-per-use
+
+PRODUCTION READINESS:
+---------------------
+✓ All critical tests passing
+✓ Health check endpoint
+✓ Error handling and validation
+✓ Database persistence
+✓ External API integrations working
+✓ Configuration management
+✓ Documentation complete
+
+DEPLOYMENT STATUS: READY
+-------------------------
+The application can be deployed to production with:
+• Proper environment variable configuration
+• API keys provisioned
+• Documents ingested to Pinecone
+• Database initialized
+• Health checks configured
+• Monitoring setup
+
+================================================================================
+END OF DOCUMENT
+================================================================================

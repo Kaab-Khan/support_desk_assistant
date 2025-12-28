@@ -31,14 +31,14 @@ def rag_query(
 ) -> RagQueryResponse:
     """Run a RAG query."""
     result = rag_service.answer(request.query)
-    
+
     sources = []
     for match in result.get("sources", []):
         metadata = match.get("metadata", {})
         doc_name = metadata.get("source", match.get("id", "unknown"))
         snippet = metadata.get("text", "")
         sources.append(RagSource(doc_name=doc_name, snippet=snippet))
-    
+
     return RagQueryResponse(answer=result.get("answer", ""), sources=sources)
 
 
@@ -50,7 +50,7 @@ def process_ticket(
 ) -> TicketAgentResponse:
     """Process a support ticket."""
     result = agent.process_ticket(db=db, text=request.ticket)
-    
+
     return TicketAgentResponse(
         id=result["id"],
         action=result["action"],
@@ -71,10 +71,10 @@ def submit_ticket_feedback(
         ticket_id=request.ticket_id,
         human_label=request.human_label,
     )
-    
+
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    
+
     return TicketRecord(
         id=ticket.id,
         text=ticket.text,
@@ -95,7 +95,7 @@ def list_tickets(
 ) -> List[TicketRecord]:
     """List tickets with pagination."""
     tickets = ticket_repository.list_tickets(db=db, skip=skip, limit=limit)
-    
+
     result = []
     for ticket in tickets:
         result.append(
@@ -110,5 +110,5 @@ def list_tickets(
                 human_label=ticket.human_label,
             )
         )
-    
+
     return result

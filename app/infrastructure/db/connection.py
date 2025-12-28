@@ -7,7 +7,7 @@ for database session handling.
 
 import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker, Session
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 from app.config.settings import get_settings
 
@@ -33,22 +33,22 @@ SessionLocal = sessionmaker(
 def init_db():
     """
     Initialize database by creating all tables if they don't exist.
-    
+
     This function is idempotent and safe to call on every app startup.
     - If database file doesn't exist: creates it
     - If tables don't exist: creates them
     - If everything exists: does nothing
     """
     # Import models to register them with Base.metadata
-    from app.infrastructure.db import models
-    
+    from app.infrastructure.db import models  # noqa: F401
+
     # Ensure data directory exists (for SQLite)
     if settings.DB_URL.startswith("sqlite:///"):
         db_path = settings.DB_URL.replace("sqlite:///", "")
         db_dir = os.path.dirname(db_path)
         if db_dir and not os.path.exists(db_dir):
             os.makedirs(db_dir, exist_ok=True)
-    
+
     # Create all tables (idempotent - only creates if they don't exist)
     Base.metadata.create_all(bind=engine)
 

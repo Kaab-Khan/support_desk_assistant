@@ -14,7 +14,7 @@ from typing import Dict, Any
 
 class RagPrompts:
     """Prompts for RAG (Retrieval-Augmented Generation) operations."""
-    
+
     SYSTEM_PROMPT_WITH_TAGS = """You are a helpful customer support assistant.
 
 Your task is to answer user questions based ONLY on the provided context from the knowledge base.
@@ -69,11 +69,11 @@ Insufficient context:
     def build_user_prompt(context: str, query: str) -> str:
         """
         Build user prompt with context and query.
-        
+
         Args:
             context: Retrieved context from knowledge base
             query: User's question
-            
+
         Returns:
             Formatted prompt string
         """
@@ -87,32 +87,32 @@ Remember: Respond ONLY with valid JSON containing answer, tags, and confidence."
 
 class PromptValidator:
     """Utilities for validating prompt responses."""
-    
+
     @staticmethod
     def validate_rag_response(response: Dict[str, Any]) -> bool:
         """
         Validate RAG response structure.
-        
+
         Args:
             response: Parsed JSON response
-            
+
         Returns:
             True if valid, False otherwise
         """
         required_fields = ["answer", "tags", "confidence"]
-        
+
         if not all(field in response for field in required_fields):
             return False
-        
+
         if not isinstance(response["answer"], str):
             return False
-        
+
         if not isinstance(response["tags"], list):
             return False
-        
+
         if response["confidence"] not in ["high", "medium", "low"]:
             return False
-        
+
         return True
 
 

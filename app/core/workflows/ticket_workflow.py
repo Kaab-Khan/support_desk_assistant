@@ -5,7 +5,7 @@ Defines a high-level ticket agent service that orchestrates RAG, summarisation,
 and CRUD operations to process support tickets and recommend actions.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
 
@@ -71,12 +71,11 @@ class TicketAgentService:
         # Extract results from RAG (now includes tags!)
         answer = rag_result.get("answer", "")
         tags = rag_result.get("tags", [])
-        confidence = rag_result.get("confidence", "low")
-        
+
         # Ensure tags is a list
         if not isinstance(tags, list):
             tags = []
-        
+
         # Check if RAG returned valid answer or insufficient context marker
         if answer and answer.strip() and "INSUFFICIENT_CONTEXT" not in answer:
             action = "reply"
@@ -86,7 +85,9 @@ class TicketAgentService:
             if "INSUFFICIENT_CONTEXT" in answer:
                 reason = "Knowledge base lacks sufficient information; escalating to human agent."
             else:
-                reason = "Could not generate automated reply; escalating to human agent."
+                reason = (
+                    "Could not generate automated reply; escalating to human agent."
+                )
 
         # Persist ticket to database
         ticket = ticket_repository.create_ticket(
@@ -128,5 +129,3 @@ def get_ticket_agent_service() -> TicketAgentService:
         )
 
     return _ticket_agent_service
-
-

@@ -5,9 +5,12 @@ Combines vector store retrieval with LLM to answer queries
 using relevant context from the knowledge base.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from app.infrastructure.vectorstores.pinecone_client import VectorStoreClient, get_vectorstore_client
+from app.infrastructure.vectorstores.pinecone_client import (
+    VectorStoreClient,
+    get_vectorstore_client,
+)
 from app.infrastructure.clients.openai_client import OpenAIClient, get_openai_client
 
 
@@ -26,7 +29,7 @@ class RagService:
     def __init__(
         self,
         vectorstore_client: VectorStoreClient,
-        openai_client: Optional[OpenAIClient] = None
+        openai_client: Optional[OpenAIClient] = None,
     ) -> None:
         """
         Initialize the RAG service.
@@ -65,8 +68,7 @@ class RagService:
 
         # Use OpenAI client to generate answer WITH tags
         rag_result = self._openai_client.generate_rag_response(
-            query=query,
-            context_chunks=context_chunks
+            query=query, context_chunks=context_chunks
         )
 
         # Format sources
@@ -85,7 +87,7 @@ class RagService:
             "answer": rag_result.get("answer", ""),
             "tags": rag_result.get("tags", []),
             "confidence": rag_result.get("confidence", "low"),
-            "sources": sources
+            "sources": sources,
         }
 
 
@@ -99,7 +101,7 @@ def get_rag_service() -> RagService:
     Returns:
         RagService: The singleton RAG service instance
     """
-    
+
     global _rag_service
 
     if _rag_service is None:

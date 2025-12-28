@@ -7,18 +7,21 @@ from pydantic import BaseModel
 
 class RagSource(BaseModel):
     """Source document in RAG response."""
+
     doc_name: str
     snippet: str
 
 
 class RagQueryResponse(BaseModel):
     """Response for RAG query."""
+
     answer: str
     sources: list[RagSource]
 
 
 class TicketAgentResponse(BaseModel):
     """Response for ticket processing."""
+
     id: int
     action: str
     reply: str | None
@@ -28,6 +31,7 @@ class TicketAgentResponse(BaseModel):
 
 class TicketRecord(BaseModel):
     """Complete ticket record."""
+
     id: int
     text: str
     action: str
