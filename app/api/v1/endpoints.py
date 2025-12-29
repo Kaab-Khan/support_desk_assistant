@@ -29,8 +29,11 @@ def rag_query(
     request: RagQueryRequest,
     rag_service: RagService = Depends(get_rag),
 ) -> RagQueryResponse:
-    """Run a RAG query."""
-    result = rag_service.answer(request.query)
+    """Run a RAG query with optional conversation history."""
+    result = rag_service.answer(
+        query=request.query,
+        conversation_history=request.conversation_history
+    )
 
     sources = []
     for match in result.get("sources", []):

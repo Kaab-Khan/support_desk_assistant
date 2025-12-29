@@ -17,6 +17,8 @@ class RagPrompts:
 
     SYSTEM_PROMPT_WITH_TAGS = """You are a helpful customer support assistant.
 
+You maintain conversation context and provide coherent, helpful responses across multiple turns of dialogue.
+
 Your task is to answer user questions based ONLY on the provided context from the knowledge base.
 
 RESPONSE FORMAT:
@@ -67,19 +69,22 @@ Insufficient context:
 }"""
 
     @staticmethod
-    def build_user_prompt(context: str, query: str) -> str:
+    def build_user_prompt(context: str, query: str, conversation_summary: str = "") -> str:
         """
         Build user prompt with context and query.
 
         Args:
             context: Retrieved context from knowledge base
             query: User's question
+            conversation_summary: Optional summary of previous conversation
 
         Returns:
             Formatted prompt string
         """
+        conversation_context = f"\n\nPrevious conversation context:\n{conversation_summary}" if conversation_summary else ""
+        
         return f"""Context from knowledge base:
-{context}
+{context}{conversation_context}
 
 User Question: {query}
 
