@@ -4,9 +4,9 @@
 ================================================================================
 
 Project Version: 0.1.0
-Last Updated: December 27, 2024
+Last Updated: December 29, 2024
 Architecture: Clean Architecture with Layered Design
-Status: Production-Ready with Complete Test Coverage (78 Tests - 77 Passed, 1 Skipped)
+Status: Production-Ready with Complete Test Coverage (101 Tests - All Passing)
 
 ================================================================================
 TABLE OF CONTENTS
@@ -37,10 +37,11 @@ KEY FEATURES:
 ✓ RAG-based knowledge base search using Pinecone vector store
 ✓ Intelligent action recommendation (reply/escalate/close)
 ✓ Tag extraction integrated into RAG workflow
+✓ Client-side conversation memory for multi-turn dialogues
 ✓ Human feedback loop for continuous improvement
 ✓ RESTful API with versioning (v1)
 ✓ SQLite database for ticket persistence
-✓ Comprehensive test suite (78 tests)
+✓ Comprehensive test suite (101 tests)
 ✓ Production-ready architecture with dependency injection
 
 IMPORTANT NOTE:
@@ -495,7 +496,7 @@ Status Codes: 200 OK
 ----------------------
 POST /api/v1/rag/query
 
-Description: Query the knowledge base using RAG
+Description: Query the knowledge base using RAG with optional conversation history
 Authentication: None
 
 Request Schema (RagQueryRequest):
@@ -503,8 +504,26 @@ Request Schema (RagQueryRequest):
   "query": "How do I reset my password?"
 }
 
+With Conversation History (for follow-up questions):
+{
+  "query": "What about the second step?",
+  "conversation_history": [
+    {
+      "role": "user",
+      "content": "How do I reset my password?"
+    },
+    {
+      "role": "assistant",
+      "content": "Follow these steps: 1. Go to Settings..."
+    }
+  ]
+}
+
 Validation:
 • query: string, required, non-empty, stripped
+• conversation_history: optional array of ConversationMessage objects
+  - role: "user" | "assistant"
+  - content: string
 
 Response Schema (RagQueryResponse):
 {
@@ -516,6 +535,14 @@ Response Schema (RagQueryResponse):
     }
   ]
 }
+
+Conversation Memory Strategy:
+• Client-side stateless memory (no server storage)
+• Client maintains conversation history locally
+• Last 6 messages (3 turns) are summarized and included in RAG prompt
+• Long messages truncated to 150 characters in summary
+• Automatic token management to control API costs
+• Works with free Render tier (no persistent storage needed)
 
 Status Codes:
 • 200 OK - Success

@@ -1,13 +1,22 @@
 """
 Request schemas (Pydantic models for API inputs).
 """
+from typing import List, Optional
 from pydantic import BaseModel, field_validator
+
+
+class ConversationMessage(BaseModel):
+    """Single message in a conversation."""
+    
+    role: str  # "user" or "assistant"
+    content: str
 
 
 class RagQueryRequest(BaseModel):
     """Request for RAG query."""
 
     query: str
+    conversation_history: Optional[List[ConversationMessage]] = None
 
     @field_validator("query")
     def query_must_not_be_empty(cls, v):

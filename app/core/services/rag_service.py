@@ -41,12 +41,13 @@ class RagService:
         self._vectorstore = vectorstore_client
         self._openai_client = openai_client or get_openai_client()
 
-    def answer(self, query: str, top_k: int = 5) -> Dict[str, Any]:
+    def answer(self, query: str, conversation_history: list | None = None, top_k: int = 5) -> Dict[str, Any]:
         """
         Answer a query using retrieval-augmented generation.
 
         Args:
             query: The user's question
+            conversation_history: Previous conversation messages
             top_k: Number of relevant documents to retrieve for context
 
         Returns:
@@ -66,9 +67,14 @@ class RagService:
             if text:
                 context_chunks.append(f"Document {idx}:\n{text}")
 
-        # Use OpenAI client to generate answer WITH tags
+        # Convert conversation history to dict format if provided
+        history_dicts = None
+        if conversation_history:
+            history_dicts = [{"role": msg.role, "content": msg.content} for msg in conversation_history]
+
+        # Use OpenAI client to generate answer WITH tags and conversation context
         rag_result = self._openai_client.generate_rag_response(
-            query=query, context_chunks=context_chunks
+            query=query, context_chunks=context_chunks, conversation_history=history_dicts
         )
 
         # Format sources

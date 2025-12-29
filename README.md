@@ -7,9 +7,10 @@ An enterprise-grade FastAPI application that automates support ticket triage usi
 - 🤖 **Automated Ticket Processing** - AI-powered triage with intelligent action recommendations
 - 📚 **RAG-Based Knowledge Base** - Vector similarity search using Pinecone
 - 🏷️ **Smart Tag Extraction** - Automatic categorization integrated into RAG workflow
-- 💬 **Intelligent Actions** - Reply, escalate, or close tickets based on context
+- 💬 **Conversation Memory** - Client-side stateless memory for multi-turn conversations
+- 🎯 **Intelligent Actions** - Reply, escalate, or close tickets based on context
 - 🔄 **Human Feedback Loop** - Continuous improvement through feedback integration
-- ✅ **Production Ready** - Comprehensive test suite with 78 tests (77 passed)
+- ✅ **Production Ready** - Comprehensive test suite with 101 tests (all passing)
 - 🏗️ **Clean Architecture** - Layered design with dependency injection
 
 ## Technology Stack
@@ -73,6 +74,17 @@ An enterprise-grade FastAPI application that automates support ticket triage usi
 
    The API will be available at `http://localhost:8000`
 
+7. **Use the interactive chat client** (optional)
+   ```bash
+   python3 chat.py
+   ```
+   
+   The chat client maintains conversation history automatically:
+   - Type your questions naturally
+   - Type `clear` to reset the conversation
+   - Press `Ctrl+C` to exit
+   - Conversation context is preserved across multiple questions
+
 ## API Endpoints
 
 ### Health Check
@@ -87,6 +99,20 @@ Content-Type: application/json
 
 {
   "query": "How do I reset my password?"
+}
+```
+
+**With Conversation History (for follow-up questions):**
+```bash
+POST /api/v1/rag/query
+Content-Type: application/json
+
+{
+  "query": "What about the second step?",
+  "conversation_history": [
+    {"role": "user", "content": "How do I reset my password?"},
+    {"role": "assistant", "content": "Follow these steps: 1. Go to Settings..."}
+  ]
 }
 ```
 

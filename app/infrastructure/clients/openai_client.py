@@ -79,7 +79,7 @@ class OpenAIClient:
         return [item.embedding for item in response.data]
 
     def generate_rag_response(
-        self, query: str, context_chunks: List[str], model: str | None = None
+        self, query: str, context_chunks: List[str], conversation_history: List[Dict[str, str]] | None = None, model: str | None = None
     ) -> Dict[str, Any]:
         """
         Generate a RAG (Retrieval-Augmented Generation) response with tags.
@@ -87,6 +87,7 @@ class OpenAIClient:
         Args:
             query: User's query.
             context_chunks: Retrieved context chunks from knowledge base.
+            conversation_history: Previous conversation messages (list of {"role": str, "content": str}).
             model: Model to use. If None, uses default model.
 
         Returns:
@@ -98,10 +99,19 @@ class OpenAIClient:
         # Build context string
         context = "\n\n".join(context_chunks)
 
+        # Build conversation summary if history exists
+        conversation_summary = ""
+        if conversation_history:
+            summary_parts = []
+            for msg in conversation_history[-6:]:  # Last 6 messages (3 turns)
+                role = "User" if msg["role"] == "user" else "Assistant"
+                summary_parts.append(f"{role}: {msg['content'][:150]}...")  # Truncate long messages
+            conversation_summary = "\n".join(summary_parts)
+
         # Use centralized prompt from schema
         messages = [
             {"role": "system", "content": RagPrompts.SYSTEM_PROMPT_WITH_TAGS},
-            {"role": "user", "content": RagPrompts.build_user_prompt(context, query)},
+            {"role": "user", "content": RagPrompts.build_user_prompt(context, query, conversation_summary)},
         ]
 
         response_text = self.generate_chat_completion(messages, model=model)
