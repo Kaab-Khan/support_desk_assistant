@@ -1,11 +1,11 @@
 """
 API v1 endpoints.
 """
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import get_db, get_ticket_agent, get_rag
+from app.api.dependencies import get_db, get_ticket_agent, get_rag, check_rate_limit
 from app.schemas.requests import (
     RagQueryRequest,
     TicketAgentRequest,
@@ -28,6 +28,7 @@ router = APIRouter()
 def rag_query(
     request: RagQueryRequest,
     rag_service: RagService = Depends(get_rag),
+    x_owner_key: Optional[str] = Header(default=None), #Add 
 ) -> RagQueryResponse:
     """Run a RAG query with optional conversation history."""
     result = rag_service.answer(

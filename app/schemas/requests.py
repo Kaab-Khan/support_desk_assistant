@@ -23,7 +23,11 @@ class RagQueryRequest(BaseModel):
         if not v or not v.strip():
             raise ValueError("Query cannot be empty or whitespace")
         return v.strip()
-
+    @field_validator("session_id")
+    def session_id_must_not_be_empty(cls, v):
+        if v is not None and not v.strip():
+            raise ValueError("Session ID cannot be empty or whitespace")
+        return v.strip()
 
 class TicketAgentRequest(BaseModel):
     """Request for ticket processing."""

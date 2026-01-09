@@ -29,7 +29,13 @@ class Settings(BaseSettings):
     DB_URL: str = "sqlite:///data/support.db"
     DOCS_DIR: str = "data/docs"
     VECTORSTORE_DIR: str = "data/vectorstore"
-
+    APP_MODE: str = "prod"  # "dev" or "prod"
+    OWNER_KEY: str = ""  # Secret key for bypassing limits
+    RATE_LIMIT_ENABLED: bool = True
+    MAX_MESSAGES_PER_SESSION: int = 20
+    SESSION_WINDOW_SECONDS: int = 86400  # 24 hours
+    MAX_CONVERSATION_HISTORY: int = 20
+    
     class Config:
         """Pydantic configuration."""
 
