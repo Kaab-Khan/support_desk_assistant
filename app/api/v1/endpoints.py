@@ -28,9 +28,16 @@ router = APIRouter()
 def rag_query(
     request: RagQueryRequest,
     rag_service: RagService = Depends(get_rag),
-    x_owner_key: Optional[str] = Header(default=None), #Add 
+    x_owner_key: Optional[str] = Header(default=None),
 ) -> RagQueryResponse:
-    """Run a RAG query with optional conversation history."""
+    """Run a RAG query with optional conversation history and rate limiting."""
+    
+    # Check rate limit before processing
+    check_rate_limit(
+        session_id=request.session_id,
+        x_owner_key=x_owner_key
+    )
+    
     result = rag_service.answer(
         query=request.query,
         conversation_history=request.conversation_history

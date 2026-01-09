@@ -34,7 +34,7 @@ def check_rate_limit(
     """
     settings = get_settings()
 
-   #DEV MODE: No Limits
+    # DEV MODE: No Limits
     if settings.APP_MODE == "dev":
         return
     
